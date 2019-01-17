@@ -1,0 +1,71 @@
+class Shrine
+  module Plugins
+    # The `hancock_location` plugin attempts to generate a nicer folder structure
+    # for uploaded files (paperclip-like).
+    #
+    #     plugin :hancock_location
+    #
+    # Based on PrettyLocation
+    module HancockLocation
+      def self.configure(uploader, opts = {})
+        # uploader.opts[:hancock_location_namespace] = opts.fetch(:namespace, uploader.opts[:hancock_location_namespace])
+        # uploader.opts[:hancock_location_namespace] = opts.fetch(:namespace, "_") # PAPERCLIP fallback
+        uploader.opts[:hancock_location_namespace] = opts.fetch(:namespace, "/") # PAPERCLIP fallback actual
+      end
+
+      module InstanceMethods
+        def generate_location(io, context)
+          if context[:record]
+            type = class_location(context[:record].class) if context[:record].class.name
+            if context[:record].respond_to?(:id)
+              id = context[:record].id
+              id_partition = id.to_s.scan(/.{4}/).join("/")
+              id_partition_in_8 = id.to_s.scan(/.{8}/).join("/")
+            end 
+          end
+          # name = context[:name]
+          name = context[:name].to_s.pluralize
+          version = context[:version]
+
+          dirname, slash, basename = super.rpartition("/")
+          # basename = "#{context[:version]}-#{basename}" if context[:version]
+
+
+          extension   = ".#{io.extension}" if io.is_a?(UploadedFile) && io.extension
+          extension ||= File.extname(extract_filename(io).to_s).downcase
+          original = (context[:record] and context[:record].image_shrine)
+          # if original and original.respond_to?(:[])
+          if original and original.is_a?(Hash)
+            original = original[:original]
+          end
+          basename = if original and (basename = original.original_filename)
+            # File.basename(basename, extension).to_url
+            File.basename(basename, ".*").to_url
+          end rescue nil
+          basename = SecureRandom.hex if basename.blank?
+          # original = dirname + slash + basename + extension
+
+          # [type, id, name, original].compact.join("/")
+          # [type, id_partition, name, dirname].compact.join("/")
+          # [type, id_partition_in_8, name, original].compact.join("/")
+          # [type, id_partition, name, version, basename + extension].compact.join("/")
+          [type, name, id_partition, version, basename + extension].compact.join("/") # PAPERCLIP fallback
+        end
+
+        private
+
+        def class_location(klass)
+          # parts = klass.name.downcase.split("::")
+          parts = klass.name.underscore.split("/") # Paperclip fallback
+          if separator = opts[:hancock_location_namespace]
+            parts.join(separator)
+          else
+            parts.last
+          end.pluralize # PAPERCLIP fallback
+        end
+      end
+    end
+
+    register_plugin(:hancock_location, HancockLocation)
+  end
+end
