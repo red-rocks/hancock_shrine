@@ -36,10 +36,15 @@ class Shrine
 
       module FileMethods
         
-        def url(**options)      
+        def url(*options)
           timestamp = metadata["timestamp"]
-          # timestamp ||= 
-          _url = super
+          _url = super()
+          begin
+            options = Hash[options]
+          rescue
+            # options = {}
+          end
+          return _url if (options and options[:timestamp] == false)
           if _url.index("?")
             "#{_url}&#{timestamp.to_i}"
           else

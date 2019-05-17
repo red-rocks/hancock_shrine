@@ -6,7 +6,7 @@ Shrine.storages = {
   store: Shrine::Storage::FileSystem.new("public", prefix: "uploads"),       # permanent
 }
 
-Shrine.plugin :logging, logger: Rails.logger
+# Shrine.plugin :logging, logger: Rails.logger
 Shrine.plugin :mongoid # or :activerecord
 Shrine.plugin :determine_mime_type
 Shrine.plugin :cached_attachment_data # for retaining the cached file across form redisplays
@@ -19,3 +19,4 @@ Shrine.plugin :versions
 Shrine.plugin :default_version
 Shrine.plugin :hancock_location
 Shrine.plugin :timestampable
+Shrine.plugin :compatibility

@@ -30,10 +30,9 @@ class Shrine
           dirname, slash, basename = super.rpartition("/")
           # basename = "#{context[:version]}-#{basename}" if context[:version]
 
-
           extension   = ".#{io.extension}" if io.is_a?(UploadedFile) && io.extension
           extension ||= File.extname(extract_filename(io).to_s).downcase
-          original = (context[:record] and context[:record].image_shrine)
+          original = (context[:record] and context[:record].send(context[:name]))
           # if original and original.respond_to?(:[])
           if original and original.is_a?(Hash)
             original = original[:original]

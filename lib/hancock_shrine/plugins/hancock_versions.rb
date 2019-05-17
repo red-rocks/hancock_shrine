@@ -8,7 +8,7 @@ class Shrine
 
       def self.load_dependencies(uploader, *)
         uploader.plugin :versions
-        uploader.plugin :default_version, name: :main
+        uploader.plugin :default_version, name: :original
       end
 
       def self.configure(uploader, opts = {})
@@ -19,6 +19,7 @@ class Shrine
 
         attr_reader :default_version_name
         def initialize(versions_hash, default_version_name)
+          versions_hash ||= {}
           versions_hash.each_pair { |k, v|
             self[k] = v
           }
@@ -27,18 +28,23 @@ class Shrine
 
         def method_missing(name, *args, &block)
           version = case name.to_sym
-          when :url, :exists?
+          when :url, :exists?, :path # TODO maybe
             args.pop || default_version_name
           else
             default_version_name
           end
-          self[version].send(name, *args, &block)
+          (self[version] || self[:original]).send(name, *args, &block)
+        end
+
+        # HARDFIX
+        def respond_to?(meth)
+          !!(super || (self[:original] and self[:original].respond_to?(meth)))
         end
 
       end
 
 
-      module ClassMethods        
+      module ClassMethods
 
         def uploaded_file(object, &block)
           if object.is_a?(Hash) && object.values.none? { |value| value.is_a?(String) }
@@ -55,19 +61,18 @@ class Shrine
 
       end
 
-      # module AttacherMethods
+      module InstanceMethods
+      end
 
-      #   private
-      #   def convert_after_read(value)
-      #     if cached?(value)
-      #       {
-      #         original: value
-      #       }
-      #     else
-      #       value
-      #     end
-      #   end
-      # end
+      module AttacherMethods
+
+        private
+        def convert_after_read(value)
+          value = {original: value} if value.is_a?(UploadedFile)
+          VersionsWrapper.new(value, default_version_name)
+        end
+
+      end
 
     end
 
