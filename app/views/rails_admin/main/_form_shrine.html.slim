@@ -11,7 +11,7 @@
 = stylesheet_link_tag 'rails_admin/ra.jcrop'
 = javascript_include_tag 'rails_admin/jquery.Jcrop'
 = javascript_include_tag 'rails_admin/ra.jcrop'
-:coffee
+coffee:
   $ ->
     $('div.shrine_type').jcropForm()
     $('div.hancock_image_type').jcropForm()
@@ -32,8 +32,8 @@
     .preview
       - if field.respond_to?(:svg?) and !field.svg? and exist
         - if use_crop
-          .title_link_hint{title: "Обрезать"}
-            %i.fa.fa-crop
+          .title_link_hint{title="Обрезать"}
+            i.fa.fa-crop
         .image_block
           = value
 = form.file_field(field.name, field.html_attributes.reverse_merge({data: { image_file: true, fileupload: true, rails_admin_jcrop_options: rails_admin_jcrop_options }}))
@@ -45,9 +45,9 @@
 
 
 - if field.optional? && field.errors.blank? && file && field.delete_method
-  %br
-  %a.btn.btn-info.btn-remove-image{href: '#', :'data-toggle' => 'button', role: 'button', onclick: "$(this).siblings('[type=checkbox]').click(); $(this).siblings('.toggle').toggle('slow'); jQuery(this).toggleClass('btn-danger btn-info'); return false;"}
-    %i.icon-white.icon-trash
+  br
+  a.btn.btn-info.btn-remove-image{href='#' data-toggle='button' role='button' onclick="$(this).siblings('[type=checkbox]').click(); $(this).siblings('.toggle').toggle('slow'); jQuery(this).toggleClass('btn-danger btn-info'); return false;"}
+    i.icon-white.icon-trash
     = I18n.t('admin.actions.delete.menu').capitalize + " #{field.label.downcase}"
 
   = form.check_box(field.delete_method, style: 'display:none;')
@@ -57,5 +57,5 @@
     = link_to 'Текущие ссылки', "#", class: "urls_toggler", onclick: "$(this).siblings('.url_block').toggleClass('hidden'); return false;"
     - file.each_pair do |s_name, data|
       .url_block.hidden
-        %span= "#{s_name}: "
+        span= "#{s_name}: "
         = link_to asset_url(data.url(s_name)), data.url(s_name), target: :_blank

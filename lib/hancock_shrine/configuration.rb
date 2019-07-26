@@ -16,6 +16,7 @@ module HancockShrine
       @vips = !!defined?(::Vips)
 
       @plugins = %w(
+        data_uri
         cached_attachment_data
         restore_cached_data
         remote_url
@@ -26,12 +27,14 @@ module HancockShrine
         processing
         backgrounding
         cropable
+        hancockable
         hancock_versions
         versions
         compatibility
       )
       @plugins.delete 'backgrounding' # TEMP
       # @plugins.delete 'hancock_versions' # TEMP
+      @plugins.delete 'hancockable' # TEMP
       
 
       @plugin_options = {

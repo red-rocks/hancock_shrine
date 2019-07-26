@@ -33,26 +33,29 @@ class Shrine
       #   end
         
       # end
-
       module FileMethods
         
         def url(*options)
-          timestamp = metadata["timestamp"]
-          _url = super()
-          begin
-            options = Hash[options]
-          rescue
-            # options = {}
+          _options = options.extract_options!
+          _options.reverse_merge!(timestamp: true)
+          timestamp = _options.delete(:timestamp) ? metadata["timestamp"] : nil
+          _url = super(*options)
+          if timestamp
+            _url = if _url.index("?")
+              "#{_url}&#{timestamp.to_i}"
+            else
+              "#{_url}?#{timestamp.to_i}"
+            end
           end
-          return _url if (options and options[:timestamp] == false)
-          if _url.index("?")
-            "#{_url}&#{timestamp.to_i}"
-          else
-            "#{_url}?#{timestamp.to_i}"
-          end
+          _url
         end
 
       end
+
+      # module FileMethods
+      #   delegate :url, to: :attacher
+      # end
+      
     end
 
     register_plugin(:timestampable, Timestampable)

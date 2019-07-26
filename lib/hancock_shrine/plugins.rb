@@ -1,5 +1,6 @@
 require 'hancock_shrine/plugins/cropable'
 require 'hancock_shrine/plugins/default_version'
+# require 'hancock_shrine/plugins/hancockable'
 require 'hancock_shrine/plugins/hancock_location'
 require 'hancock_shrine/plugins/hancock_versions'
 require 'hancock_shrine/plugins/timestampable'

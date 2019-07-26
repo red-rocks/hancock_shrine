@@ -29,7 +29,7 @@ class Shrine
         def method_missing(name, *args, &block)
           version = case name.to_sym
           when :url, :exists?, :path # TODO maybe
-            args.pop || default_version_name
+            args.shift || default_version_name
           else
             default_version_name
           end
