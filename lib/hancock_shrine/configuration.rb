@@ -38,6 +38,11 @@ module HancockShrine
       
 
       @plugin_options = {
+        saver: {
+          opts: {
+            quality: 90, strip: true
+          }
+        },
         remote_url: {
           max_size: 20*1024*1024
         },

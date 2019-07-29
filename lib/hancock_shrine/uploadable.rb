@@ -34,9 +34,9 @@ module HancockShrine::Uploadable
     def get_pipeline(original)
       source = (original.is_a?(Tempfile) ? original.path : original.download)
       if imagick?
-        ImageProcessing::MiniMagick.source(source).saver(quality: 90, strip: true)
+        ImageProcessing::MiniMagick.source(source).saver(saver_opts)
       elsif vips?
-        ImageProcessing::Vips.source(source).saver(quality: 90, strip: true)
+        ImageProcessing::Vips.source(source).saver(saver_opts)
       end
     end
 
@@ -46,6 +46,64 @@ module HancockShrine::Uploadable
     end
     def max_height
       HancockShrine.config.plugin_options[:validation_helpers][:max_height]
+    end
+
+
+    def saver_opts
+      HancockShrine.config.plugin_options[:saver][:opts] || {}
+    end
+
+    def get_styles(context, action)
+      name = context[:name].to_s
+      styles_method = name + "_styles"
+
+      if context[:record].method(styles_method).arity == 1
+        context[:record].send(styles_method, action)
+      else
+        context[:record].send(styles_method)
+      end
+    end
+
+    def resize_opts_default
+      {sharpen: false, size: :down}
+    end
+
+
+    def process_style(pipeline, style_opts)
+
+      if style_opts.is_a?(String)
+        style_opts = {
+          geometry: style_opts
+        }
+      end
+
+      # https://github.com/thoughtbot/paperclip/blob/6661480c5b321709ad44c7ef9572d7f908857a9d/lib/paperclip/geometry_parser_factory.rb
+      if geometry = style_opts[:geometry]
+        if actual_match = geometry.match(/\b(\d*)x?(\d*)\b(?:,(\d?))?(\@\>|\>\@|[\>\<\#\@\%^!])?/i)
+          width = actual_match[1].to_i
+          height = actual_match[2].to_i
+          orientation = actual_match[3]
+          modifier = actual_match[4]
+
+          # https://github.com/thoughtbot/paperclip/blob/6661480c5b321709ad44c7ef9572d7f908857a9d/lib/paperclip/geometry.rb
+          ### TODO; may be not 'resize_to_limit'
+          pipeline = case modifier
+          when '!', '#'
+            pipeline.resize_to_fill(width, height, resize_opts_default)
+          when '>'
+            pipeline.resize_to_limit(width, height, resize_opts_default)
+          when '<'
+            pipeline.resize_to_limit(width, height, resize_opts_default)
+          else
+            pipeline.resize_to_limit(width, height, resize_opts_default)
+          end
+        end
+      end
+
+      if format = style_opts[:format]
+        pipeline = pipeline.convert(format)
+      end
+      pipeline.call!
     end
 
 
@@ -70,13 +128,7 @@ module HancockShrine::Uploadable
 
         if plugin_name == :validation_helpers
           if defined?(base) and base and defined?(base::Attacher) and base::Attacher
-            # puts '111'
-            # puts get.inspect if defined?(get)
-            # puts '222'
             base::Attacher.validate do
-              # puts '333'
-              # puts get.inspect if defined?(get)
-              # puts '444'
               validate_max_size MAX_SIZE
               if validate_mime_type_inclusion(ALLOWED_TYPES)
                 validate_max_width store.max_width
@@ -86,11 +138,46 @@ module HancockShrine::Uploadable
           end
         elsif plugin_name == :processing
           class_eval <<-RUBY
-            def hancock_processing(io, context)
+            def hancock_processing(action, io, context)
+              original, versions = get_data_from(io, context) do |original, versions|
+                begin
+
+                  pipeline = get_pipeline(original)
+                  return versions if pipeline.blank?
+
+                  versions[:compressed] = pipeline.convert!(nil)
+                  if crop_params = crop_params(context[:record])
+                    pipeline = pipeline.crop(*crop_params)  
+                  end
+
+                  case action.to_sym
+                  when :store
+                    styles = get_styles(context, :store)
+
+                    styles.each_pair do |style_name, style_opts|
+                      versions[style_name] = process_style(pipeline, style_opts)
+                    end
+
+                  when :recache
+                    styles = get_styles(context, :recache)
+
+                    styles.each_pair do |style_name, style_opts|
+                      versions[style_name] = process_style(pipeline, style_opts)
+                    end
+
+                  end
+                rescue
+                end
+                versions
+              end
+              versions.compact
             end
           RUBY
           process(:store) do |io, context|
-            hancock_processing(io, context)
+            hancock_processing(:store, io, context)
+          end
+          process(:recache) do |io, context|
+            hancock_processing(:recache, io, context)
           end
         end
 
