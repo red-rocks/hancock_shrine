@@ -69,7 +69,9 @@ module HancockShrine::Uploadable
     end
 
 
-    def process_style(pipeline, style_opts)
+    def process_style(pipeline:, style_name:, style_opts:, io:, context:)
+
+      pipeline = pre_process_style(pipeline, style_name, style_opts, io, context)
 
       if style_opts.is_a?(String)
         style_opts = {
@@ -103,7 +105,16 @@ module HancockShrine::Uploadable
       if format = style_opts[:format]
         pipeline = pipeline.convert(format)
       end
+
+      pipeline = post_process_style(pipeline, style_name, style_opts, io, context)
+
       pipeline.call!
+    end
+    def pre_process_style(pipeline:, style_name:, style_opts:, io:, context:)
+      pipeline
+    end
+    def post_process_style(pipeline:, style_name:, style_opts:, io:, context:)
+      pipeline
     end
 
 
@@ -138,7 +149,9 @@ module HancockShrine::Uploadable
           end
         elsif plugin_name == :processing
           class_eval <<-RUBY
+
             def hancock_processing(action, io, context)
+              puts 'def hancock_processing(action, io, context)'
               original, versions = get_data_from(io, context) do |original, versions|
                 begin
 
@@ -146,25 +159,32 @@ module HancockShrine::Uploadable
                   return versions if pipeline.blank?
 
                   versions[:compressed] = pipeline.convert!(nil)
-                  if crop_params = crop_params(context[:record])
-                    pipeline = pipeline.crop(*crop_params)  
+                  if _crop_params = crop_params(context[:record])
+                    pipeline = pipeline.crop(*_crop_params)
+                    
+                    io.metadata[:crop] ||= {
+                      x: crop_params[0],
+                      y: crop_params[1],
+                      w: crop_params[2],
+                      h: crop_params[3],
+                    } if io.metadata
                   end
 
                   case action.to_sym
-                  when :store
-                    styles = get_styles(context, :store)
+                  when :store, :recache
+                    styles = get_styles(context, action.to_sym)
 
                     styles.each_pair do |style_name, style_opts|
-                      versions[style_name] = process_style(pipeline, style_opts)
+                      opts = {
+                        pipeline: pipeline,
+                        style_name: style_name,
+                        style_opts: style_opts, 
+                        io: io, 
+                        context: context
+                      }
+                      versions[style_name] = process_style(opts)
                     end
-
-                  when :recache
-                    styles = get_styles(context, :recache)
-
-                    styles.each_pair do |style_name, style_opts|
-                      versions[style_name] = process_style(pipeline, style_opts)
-                    end
-
+                  else
                   end
                 rescue
                 end

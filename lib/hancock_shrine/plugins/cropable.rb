@@ -12,16 +12,17 @@ class Shrine
       end
 
       def self.load_dependencies(uploader, *)
-        # uploader.plugin :add_metadata
-        # uploader.add_metadata :timestamp do |io|
-        #   Time.new.to_i
-        # end
+        uploader.plugin :add_metadata
+        uploader.add_metadata :crop do |io|
+          {}
+        end
       end
 
 
       module InstanceMethods
 
         def crop_params(target = nil)
+
           return nil if target.nil?
           return @crop_params if @crop_params
           w = ((target.respond_to?(:crop_w) and target.crop_w) ? target.crop_w.to_i : nil)

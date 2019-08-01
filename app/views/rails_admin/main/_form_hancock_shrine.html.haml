@@ -1,20 +1,20 @@
-- if field.jcrop_options.is_a?(Hash)
-  - rails_admin_jcrop_options = field.jcrop_options.to_json
+- if field.crop_options.is_a?(Hash)
+  - rails_admin_crop_options = field.crop_options.to_json
 - else
-  - _method = field.jcrop_options.to_sym
+  - _method = field.crop_options.to_sym
   - if form.object.respond_to?(_method)
-    - rails_admin_jcrop_options = form.object.send(field.jcrop_options.to_sym).to_json
+    - rails_admin_crop_options = form.object.send(field.crop_options.to_sym).to_json
   - else
-    - rails_admin_jcrop_options = {}
+    - rails_admin_crop_options = {}
 
-= stylesheet_link_tag 'rails_admin/jquery.Jcrop'
-= stylesheet_link_tag 'rails_admin/ra.jcrop'
-= javascript_include_tag 'rails_admin/jquery.Jcrop'
-= javascript_include_tag 'rails_admin/ra.jcrop'
-coffee:
-  $ ->
-    $('div.shrine_type').jcropForm()
-    $('div.hancock_image_type').jcropForm()
+-# = stylesheet_link_tag 'rails_admin/jquery.Jcrop'
+-# = stylesheet_link_tag 'rails_admin/ra.jcrop'
+-# = javascript_include_tag 'rails_admin/jquery.Jcrop'
+-# = javascript_include_tag 'rails_admin/ra.jcrop'
+-# :coffee
+-#   $ ->
+-#     $('div.shrine_type').jcropForm()
+-#     $('div.hancock_image_type').jcropForm()
 
 -# - file = form.object.send(field.method_name).presence
 - file = field.value
@@ -25,29 +25,30 @@ coffee:
   = form.hidden_field(field.method_name, value: form.object.send(cache_method).to_json)
 
 - use_crop = (field.pretty_value and exist and field.image? and !field.svg?)
-- _add_class = (use_crop ? "jcrop_data_value" : "")
+-# - _add_class = (use_crop ? "jcrop_data_value" : "")
+- _add_class = (use_crop ? "crop_data_value" : "")
 .toggle{class: "#{_add_class}", style: ('display:none;' if file and field.delete_method and form.object.send(field.delete_method) == '1')}
   - value = image_tag(field.resource_url(field.thumb_method), class: 'img-thumbnail') rescue field.pretty_value
   - if value
     .preview
       - if field.respond_to?(:svg?) and !field.svg? and exist
         - if use_crop
-          .title_link_hint{title="Обрезать"}
-            i.fa.fa-crop
+          .title_link_hint{title: "Обрезать"}
+            %i.fa.fa-crop
         .image_block
           = value
-= form.file_field(field.name, field.html_attributes.reverse_merge({data: { image_file: true, fileupload: true, rails_admin_jcrop_options: rails_admin_jcrop_options }}))
+= form.file_field(field.name, field.html_attributes.reverse_merge({data: { image_file: true, fileupload: true, rails_admin_crop_options: rails_admin_crop_options }}))
 
 - model_name = form.object.class.to_param.gsub("::", "~").underscore
-- url = jcrop_path(model_name: model_name, modal: true, id: form.object.id, field: field.name, fit_image: field.fit_image)
-- link_data = {link: url, thumb: field.thumb_method || "original"}
-= link_to 'Edit Image', '#', data: link_data, style: 'display:none', class: "jcrop_handle"
+-# - url = jcrop_path(model_name: model_name, modal: true, id: form.object.id, field: field.name, fit_image: field.fit_image)
+-# - link_data = {link: url, thumb: field.thumb_method || "original"}
+-# = link_to 'Edit Image', '#', data: link_data, style: 'display:none', class: "jcrop_handle"
 
 
 - if field.optional? && field.errors.blank? && file && field.delete_method
-  br
-  a.btn.btn-info.btn-remove-image{href='#' data-toggle='button' role='button' onclick="$(this).siblings('[type=checkbox]').click(); $(this).siblings('.toggle').toggle('slow'); jQuery(this).toggleClass('btn-danger btn-info'); return false;"}
-    i.icon-white.icon-trash
+  %br
+  %a.btn.btn-info.btn-remove-image{href: '#', :'data-toggle' => 'button', role: 'button', onclick: "$(this).siblings('[type=checkbox]').click(); $(this).siblings('.toggle').toggle('slow'); jQuery(this).toggleClass('btn-danger btn-info'); return false;"}
+    %i.icon-white.icon-trash
     = I18n.t('admin.actions.delete.menu').capitalize + " #{field.label.downcase}"
 
   = form.check_box(field.delete_method, style: 'display:none;')
@@ -57,5 +58,5 @@ coffee:
     = link_to 'Текущие ссылки', "#", class: "urls_toggler", onclick: "$(this).siblings('.url_block').toggleClass('hidden'); return false;"
     - file.each_pair do |s_name, data|
       .url_block.hidden
-        span= "#{s_name}: "
+        %span= "#{s_name}: "
         = link_to asset_url(data.url(s_name)), data.url(s_name), target: :_blank

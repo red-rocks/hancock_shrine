@@ -1,0 +1,116 @@
+= stylesheet_link_tag "cropper/cropper.css", media: :all
+= javascript_include_tag "cropper/cropper.js"
+
+- if field.crop_options.is_a?(Hash)
+  - rails_admin_crop_options = field.crop_options.to_json
+- else
+  - _method = field.crop_options.to_sym
+  - if form.object.respond_to?(_method)
+    - rails_admin_crop_options = form.object.send(field.crop_options.to_sym).to_json
+  - else
+    - rails_admin_crop_options = {}
+    
+- file = form.object.send(field.method_name).presence
+/ - file = field.value
+- cached = false
+- exist = (file and file.exists?)
+/ - if true or field.cache_method and exist and (cached = form.object.send("#{field.method_name}_attacher").cached?)
+  - (cache_method = field.cache_method.clone).slice!("cached_")
+  - cache = form.object.send(cache_method)
+  = form.hidden_field(field.method_name, value: (cache and cache.to_json), class: 'cache')
+
+- (cache_method = field.cache_method.clone).slice!("cached_")
+- cache = form.object.send(field.cache_method)
+= form.hidden_field(field.method_name, value: (cache and cache.to_json), class: 'cache')
+
+- use_crop = true
+- _add_class = (use_crop ? "crop_data_value" : "")
+.toggle{class="#{_add_class}" style=('display:none;' if file and field.delete_method and form.object.send(field.delete_method) == '1')}
+  - value = image_tag(field.resource_url(field.thumb_method) || field.pretty_value || "", class: 'img-thumbnail')
+  .preview
+    .image_block
+      button.crop-btn.title_link_hint{title="Обрезать"}
+        i.fa.fa-crop
+      = value
+= form.file_field(field.name, field.html_attributes.reverse_merge({data: { image_file: true, fileupload: true, rails_admin_crop_options: rails_admin_crop_options, original: field.resource_url}}))
+
+- model_name = form.object.class.to_param.gsub("::", "~").underscore
+/ - url = jcrop_path(model_name: model_name, modal: true, id: form.object.id, field: field.name, fit_image: field.fit_image)
+/ - link_data = {link: url, thumb: field.thumb_method || "original"}
+/ = link_to 'Edit Image', '#', data: link_data, style: 'display:none', class: "jcrop_handle"
+
+
+- if field.optional? && field.errors.blank? && file && field.delete_method
+  br
+  a.btn.btn-info.btn-remove-image{href='#' data-toggle='button' role='button' onclick="$(this).siblings('[type=checkbox]').click(); $(this).siblings('.toggle').toggle('slow'); jQuery(this).toggleClass('btn-danger btn-info'); return false;"}
+    i.icon-white.icon-trash
+    = I18n.t('admin.actions.delete.menu').capitalize + " #{field.label.downcase}"
+
+  = form.check_box(field.delete_method, style: 'display:none;', class: "delete-checkbox")
+  
+- if file and file.respond_to?(:each_pair)
+  .urls_list_block
+    = link_to 'Текущие ссылки', "#", class: "urls_toggler", onclick: "$(this).siblings('.url_block').toggleClass('hidden'); return false;"
+    - file.each_pair do |s_name, data|
+      .url_block.hidden
+        span= "#{s_name}: "
+        = link_to asset_url(data.url), data.url, target: :_blank
+
+
+- if field.direct_upload
+  script src="https://unpkg.com/babel-polyfill@6.26.0/dist/polyfill.min.js" 
+  script src="https://transloadit.edgly.net/releases/uppy/v1.0.0/uppy.min.js" 
+  link href="https://transloadit.edgly.net/releases/uppy/v1.0.0/uppy.min.css" rel="stylesheet"
+
+  javascript:
+    function fileUpload(fileInput) {
+      var imagePreview = fileInput.parentNode.querySelector('.img-thumbnail')
+
+      fileInput.style.display = 'none' // uppy will add its own file input
+
+      var uppy = Uppy.Core({
+          id: fileInput.id,
+          autoProceed: true,
+          meta: { id: '#{form.object.new_record? ? '' : form.object.id.to_s}' }
+        })
+        .use(Uppy.FileInput, {
+          target: fileInput.parentNode,
+        })
+        .use(Uppy.Informer, {
+          target: fileInput.parentNode,
+        })
+        .use(Uppy.ProgressBar, {
+          target: imagePreview.parentNode,
+        })
+        .use(Uppy.ThumbnailGenerator, {
+          thumbnailWidth: 400,
+        })
+
+      uppy.use(Uppy.XHRUpload, {
+        endpoint: '#{field.direct_upload[:url]}',
+        formData: true,
+        metaFields: ['id', 'name'],
+        withCredentials: true,
+        responseUrlFieldName: 'id'
+      })
+
+      uppy.on('upload-success', function (file, response) {
+        // read uploaded file data from the upload endpoint response
+        var uploadedFileData = JSON.stringify(response.body)
+
+        // set hidden field value to the uploaded file data so that it's submitted with the form as the attachment
+        var hiddenInput = fileInput.parentNode.querySelector('.cache')
+        hiddenInput.value = uploadedFileData
+      })
+
+      uppy.on('thumbnail:generated', function (file, preview) {
+        imagePreview.src = preview
+      })
+
+      return uppy
+    }
+
+    document.querySelectorAll('.hancock_shrine_type [type=file]:not(.uppy)').forEach(function (fileInput) {
+      fileUpload(fileInput)
+    })
+

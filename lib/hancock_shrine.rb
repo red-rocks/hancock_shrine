@@ -1,4 +1,3 @@
-
 require "hancock_cms"
 require "shrine"
 
@@ -6,6 +5,9 @@ require "hancock_shrine/version"
 
 require "hancock_shrine/configuration"
 require "hancock_shrine/engine"
+
+require "hancock_shrine/rails_admin/hancock_shrine"
+require "hancock_shrine/rails_admin/hancock_shrine_crop"
 
 require "hancock_shrine/plugins"
 require "hancock_shrine/jobs"
