@@ -4,9 +4,9 @@ class HancockUploader < Shrine
   include HancockShrine::BaseUploader
 
   def self.inherited(subclass)
-    puts 'def inherited(subclass)'
-    puts 'HancockUploader < Shrine'
-    puts subclass
+    # puts 'def inherited(subclass)'
+    # puts 'HancockUploader < Shrine'
+    # puts subclass
     super(subclass)
   end
 
