@@ -152,39 +152,34 @@ module HancockShrine::Uploadable
 
             def hancock_processing(action, io, context)
               puts 'def hancock_processing(action, io, context)'
+              if action.to_sym == :upload
+                context[:location] ||= hancock_location(io, context)
+                return io
+              end
               original, versions = get_data_from(io, context) do |original, versions|
                 begin
 
                   pipeline = get_pipeline(original)
-                  return versions if pipeline.blank?
+                  if pipeline
+                    versions[:compressed] = pipeline.convert!(nil)
+                    pipeline = cropping(pipeline, io, context)
 
-                  versions[:compressed] = pipeline.convert!(nil)
-                  if _crop_params = crop_params(context[:record])
-                    pipeline = pipeline.crop(*_crop_params)
-                    
-                    io.metadata[:crop] ||= {
-                      x: crop_params[0],
-                      y: crop_params[1],
-                      w: crop_params[2],
-                      h: crop_params[3],
-                    } if io.metadata
-                  end
+                    case action.to_sym
+                    when :store, :recache
+                      styles = get_styles(context, action.to_sym)
 
-                  case action.to_sym
-                  when :store, :recache
-                    styles = get_styles(context, action.to_sym)
-
-                    styles.each_pair do |style_name, style_opts|
-                      opts = {
-                        pipeline: pipeline,
-                        style_name: style_name,
-                        style_opts: style_opts, 
-                        io: io, 
-                        context: context
-                      }
-                      versions[style_name] = process_style(opts)
+                      styles.each_pair do |style_name, style_opts|
+                        opts = {
+                          pipeline: pipeline,
+                          style_name: style_name,
+                          style_opts: style_opts, 
+                          io: io, 
+                          context: context
+                        }
+                        versions[style_name] = process_style(opts)
+                      end
+                    else
                     end
-                  else
                   end
                 rescue
                 end
@@ -198,6 +193,9 @@ module HancockShrine::Uploadable
           end
           process(:recache) do |io, context|
             hancock_processing(:recache, io, context)
+          end
+          process(:upload) do |io, context|
+            hancock_processing(:upload, io, context)
           end
         end
 

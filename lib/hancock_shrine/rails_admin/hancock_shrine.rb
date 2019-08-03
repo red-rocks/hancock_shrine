@@ -10,6 +10,10 @@ module RailsAdmin
             :form_hancock_shrine
           end
 
+          register_instance_option :css_class do
+            direct_upload ? "#{self.name}_field no-jcrop" : "#{self.name}_field"
+          end
+
           # register_instance_option :process_watermark_toggler_method do
           #   # (!svg? and "process_watermark_#{name}")
           #   # read below in :allowed_methods

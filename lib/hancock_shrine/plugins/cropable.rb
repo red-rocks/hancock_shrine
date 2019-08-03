@@ -21,6 +21,12 @@ class Shrine
 
       module InstanceMethods
 
+        def extract_metadata(io, **options)
+          metadata = super
+          metadata[:crop] = (io && io.data && io.data["metadata"] && io.data["metadata"]["crop"]) rescue nil
+          metadata.compact
+        end
+
         def crop_params(target = nil)
 
           return nil if target.nil?
@@ -35,12 +41,38 @@ class Shrine
               # IMagick / RMagick / ImageMagick
               x = "+#{x}" if x >= 0
               y = "+#{y}" if y >= 0
-              "#{w}x#{h}#{x}#{y}"
+              ["#{w}x#{h}#{x}#{y}"]
             elsif vips?
               # VIPS
               [x, y, w, h].map(&:to_i) 
             end
           end
+        end
+
+        def cropping(pipeline, io, context)
+          _crop_params = crop_params(context[:record]) 
+          if _crop_params.blank?
+            _crop_params = io.metadata[:crop] || io.metadata["crop"]
+            unless _crop_params.blank?
+              _crop_params = _crop_params.with_indifferent_access
+              _crop_params = [
+                _crop_params[:crop_x],
+                _crop_params[:crop_y],
+                _crop_params[:crop_w],
+                _crop_params[:crop_h]
+              ]
+            end
+          end
+          unless _crop_params.blank?
+            io.metadata[:crop] ||= {
+              crop_x: _crop_params[0],
+              crop_y: _crop_params[1],
+              crop_w: _crop_params[2],
+              crop_h: _crop_params[3],
+            }
+            pipeline = pipeline.crop(*_crop_params)
+          end          
+          pipeline
         end
         
       end
