@@ -1,7 +1,8 @@
 #= require cropper/cropper
 #= require cropper/cropper
 
-#= require babel-polyfill/polyfill
+# require babel-polyfill/polyfill
+#= require idempotent-babel-polyfill/polyfill
 #= require uppy/uppy
 
 #= require_self
