@@ -16,8 +16,17 @@ require "hancock_shrine/jobs"
 
 require "hancock_shrine/init"
 
+
 require "hancock_shrine/uploadable"
+require "hancock_shrine/uploadable/content"
+require "hancock_shrine/uploadable/deriviations"
+require "hancock_shrine/uploadable/options"
+require "hancock_shrine/uploadable/plugins"
+require "hancock_shrine/uploadable/styles"
+require "hancock_shrine/uploadable/upload_endpoint"
+
 require "hancock_shrine/uploader"
+
 
 module HancockShrine
   # Your code goes here...

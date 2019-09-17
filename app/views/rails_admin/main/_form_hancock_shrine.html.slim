@@ -38,16 +38,16 @@
         i.fa.fa-crop
       = value
 
-ruby:
-  field.direct_upload
+ruby:  
   attrs = {
-    data: { 
+    data: {
+      direct_upload: field.direct_upload,
       image_file: true, 
       fileupload: true, 
       rails_admin_crop_options: rails_admin_crop_options, 
       rails_admin_jcrop_options: rails_admin_crop_options,
       original: field.resource_url
-    }
+    }.compact
   }
   attrs[:class] = 'no-uppy' unless field.direct_upload
 = form.file_field(field.name, field.html_attributes.reverse_merge(attrs))
@@ -70,9 +70,9 @@ ruby:
 
   = form.check_box(field.delete_method, style: 'display:none;', class: "delete-checkbox")
   
-- if file and file.respond_to?(:each_pair)
-  .urls_list_block
-    = link_to 'Текущие ссылки', "#", class: "urls_toggler"
+.urls_list_block
+  = link_to 'Текущие ссылки', "#", class: "urls_toggler"
+  - if file and file.respond_to?(:each_pair)
     - file.each_pair do |s_name, data|
       .url_block.hidden(class="style-#{s_name}")
         span= "#{s_name}: "

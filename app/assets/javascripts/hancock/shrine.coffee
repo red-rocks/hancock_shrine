@@ -4,11 +4,15 @@
 # require babel-polyfill/polyfill
 #= require idempotent-babel-polyfill/polyfill
 #= require uppy/uppy
+#= require hancock/uppy/locales/ru
 
 #= require_self
 
 window.hancock_cms ||= {}
 window.hancock_cms.shrine ||= {}
+
+return if window.hancock_cms.shrine.loaded
+window.hancock_cms.shrine.loaded = true
 
 window.hancock_cms.shrine.checkCropAvailable = (fileInput) ->
   cacheField = fileInput.parentNode.querySelector('.cache')
@@ -24,6 +28,9 @@ window.hancock_cms.shrine.checkCropAvailable = (fileInput) ->
 
 
 window.hancock_cms.shrine.fileUpload = (fileInput) ->
+  fileInput = fileInput[0] unless fileInput instanceof Node
+  return fileInput.uppy if fileInput.uppy
+
   imagePreview = fileInput.parentNode.querySelector('.img-thumbnail')
   fileInput.style.display = 'none'
   # uppy will add its own file input
@@ -31,21 +38,31 @@ window.hancock_cms.shrine.fileUpload = (fileInput) ->
     id: fileInput.id
     autoProceed: true
     allowMultipleUploads: true
+    locale: window.Uppy.locales.ru_RU
+  # ).use(Uppy.DragDrop, target: fileInput.parentNode
   ).use(Uppy.FileInput, target: fileInput.parentNode
   ).use(Uppy.Informer, target: fileInput.parentNode
-  ).use(Uppy.ProgressBar, target: imagePreview.parentNode
+  ).use(Uppy.ProgressBar, target: (imagePreview || fileInput).parentNode
   ).use(Uppy.ThumbnailGenerator, thumbnailWidth: 400)
   
+  metaFields = ['name']
+  if imagePreview
+    metaFields.push 'crop_x'
+    metaFields.push 'crop_y'
+    metaFields.push 'crop_w'
+    metaFields.push 'crop_h'
+  
+  endpoint = try if fileInput.dataset 
+    if fileInput.dataset.directUpload 
+      JSON.parse(fileInput.dataset.directUpload).url
+  catch error
+    null
+
   uppy.use Uppy.XHRUpload,
-    endpoint: '#{field.direct_upload[:url]}'
+    # endpoint: '#{field.direct_upload[:url]}'
+    endpoint: endpoint
     formData: true
-    metaFields: [
-      'name'
-      'crop_x'
-      'crop_y'
-      'crop_w'
-      'crop_h'
-    ]
+    metaFields: metaFields
     withCredentials: true
     responseUrlFieldName: 'url'
 
@@ -58,38 +75,54 @@ window.hancock_cms.shrine.fileUpload = (fileInput) ->
     # set hidden field value to the uploaded file data so that it's submitted with the form as the attachment
     hiddenInput = fileInput.parentNode.querySelector('.cache')
     hiddenInput.value = uploadedFileData
-    console.log imagePreview.src
+    console.log imagePreview.src if imagePreview
     console.log response.body.url
-    imagePreview.src = response.body.url
-    console.log imagePreview.src
+    imagePreview.src = response.body.url if imagePreview
+    console.log imagePreview.src if imagePreview
+
+    if response.body.url
+      urls_list_block = $(fileInput).siblings('.urls_list_block')
+      data = {original: {url: response.body.url, id: response.body.data.id}}
+      for style, style_opts of data
+        a = urls_list_block.find(".url_block.style-#{style} a")
+        if a.length == 0
+          span = "<span>#{style}: </span>"
+          tag_a = "<a target='_blank'></a>"
+          urls_list_block.append("<div class='url_block style-#{style}'>#{span}#{tag_a}</div>")
+          a = urls_list_block.find(".url_block.style-#{style} a")
+        a.attr('href', style_opts.url).text(style_opts.id)
     
   uppy.on 'file-added', (file) ->
     console.log 'Added file', file
     # uppy.setMeta({cached_metadata: null}))
-    uppy.setMeta
-      crop_x: null
-      crop_y: null
-      crop_w: null
-      crop_h: null
-    checkCropAwindow.hancock_cms.shrine.vailable fileInput
+    if imagePreview
+      uppy.setMeta
+        crop_x: null
+        crop_y: null
+        crop_w: null
+        crop_h: null
+      window.hancock_cms.shrine.checkCropAvailable fileInput
     
-  uppy.on 'thumbnail:generated', (file, preview) ->
-    console.log 'thumbnail:generated'
-    imagePreview.src = imagePreview.src or preview
+   if imagePreview
+    uppy.on 'thumbnail:generated', (file, preview) ->
+      console.log 'thumbnail:generated'
+      imagePreview.src = imagePreview.src or preview
     
-  uppy.on 'upload', (data) ->
-    imagePreview.removeAttribute 'src'
-    window.hancock_cms.shrine.checkCropAvailable fileInput
+    uppy.on 'upload', (data) ->
+      console.log(data)
+      imagePreview.removeAttribute 'src'
+      window.hancock_cms.shrine.checkCropAvailable fileInput
     
   fileInput.classList.add 'uppy'
   fileInput.uppy = uppy
-  window.hancock_cms.shrine.checkCropAvailable fileInput
+  window.hancock_cms.shrine.checkCropAvailable fileInput if imagePreview
   uppy
 
 
 $(document).on 'rails_admin.dom_ready', ->
-  $('.hancock_shrine_type [type=file]:not(.uppy, .no-uppy)').each (i, fileInput) ->
-    window.hancock_cms.shrine.fileUpload fileInput
+  $('.hancock_shrine_type input[type=file]').filter(':not(.uppy, .no-uppy, .uppy-DragDrop-input, .uppy-FileInput-input)').each (i, fileInput) ->
+    unless fileInput.uppy
+      window.hancock_cms.shrine.fileUpload fileInput
 
 
 #########
@@ -183,7 +216,8 @@ $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
         aspectRatio: JSON.parse(field.data('rails-admin-crop-options').aspectRatio),
         # viewMode: 1,
         # scalable: false,
-        # zoomable: false
+        rotatable: false,
+        zoomable: false
       })
   , 500
 
@@ -195,15 +229,27 @@ $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
     $image = dialogBody.find('#cropper-image')
     cropper = $image.data('cropper')
 
-    scaleX = cropper.imageData.naturalWidth / cropper.imageData.width
-    scaleY = cropper.imageData.naturalHeight / cropper.imageData.height
-    cropBoxData = cropper.cropBoxData
+    console.log(cropper)
 
+    ####OLD
+    # scaleX = cropper.imageData.naturalWidth / cropper.imageData.width
+    # scaleY = cropper.imageData.naturalHeight / cropper.imageData.height
+    # cropBoxData = cropper.cropBoxData
+
+    # cropData = {
+    #   crop_x: cropBoxData.left * scaleX
+    #   crop_y: cropBoxData.top * scaleX
+    #   crop_w: cropBoxData.width * scaleX
+    #   crop_h: cropBoxData.height * scaleX
+    # }
+
+    ####NEW
+    cropData = cropper.getData()
     cropData = {
-      crop_x: cropBoxData.left * scaleX
-      crop_y: cropBoxData.top * scaleX
-      crop_w: cropBoxData.width * scaleX
-      crop_h: cropBoxData.height * scaleX
+      crop_x: cropData.x
+      crop_y: cropData.y
+      crop_w: cropData.width
+      crop_h: cropData.height
     }
     
 
@@ -211,6 +257,10 @@ $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
     $cropper_form = $('#cropper-form')
     if $cropper_form.length > 0 # if "/edit" action
       $cropper_form.on "ajax:error ajax:complete", (e, xhr, status, error)->
+        console.log(e)
+        console.log(xhr)
+        console.log(status)
+        console.log(error)
         if error
           alert(error)
           console.log(error)
@@ -243,13 +293,28 @@ $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
       uppy = field[0].uppy
       uppy.setMeta(cropData)
 
-      uppy.retryUpload(uppy.getFiles()[0].id).then (result) -> 
+      files = uppy.getFiles()
+      uppy.retryUpload(files[files.length-1].id).then (result) -> 
         console.info('Successful uploads:', result.successful)
 
         if (result.failed.length > 0) 
           console.error('Errors:')
           result.failed.forEach (file) -> 
             console.error(file.error)
+
+        console.log('result')
+        console.log(result)
+        if result.successful
+          urls_list_block = fieldCache.siblings('.urls_list_block')
+          data = {crop: {url: result.successful[0].uploadURL}}
+          for style, style_opts of data
+            a = urls_list_block.find(".url_block.style-#{style} a")
+            if a.length == 0
+              span = "<span>#{style}: </span>"
+              tag_a = "<a target='_blank'></a>"
+              urls_list_block.append("<div class='url_block style-#{style}'>#{span}#{tag_a}</div>")
+              a = urls_list_block.find(".url_block.style-#{style} a")
+            a.attr('href', style_opts.url).text(style_opts.id)
       
         dialog.modal('hide')
       
