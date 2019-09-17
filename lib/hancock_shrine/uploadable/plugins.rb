@@ -34,8 +34,8 @@ module HancockShrine::Uploadable::Plugins
         if plugin_name == :validation_helpers
           if defined?(base) and base and defined?(base::Attacher) and base::Attacher
             base::Attacher.validate do
-              validate_max_size MAX_SIZE
-              if validate_mime_type_inclusion(ALLOWED_TYPES)
+              validate_max_size HancockShrine::Uploadable::MAX_SIZE
+              if validate_mime_type_inclusion(HancockShrine::Uploadable::ALLOWED_TYPES)
                 validate_max_width store.max_width
                 validate_max_height store.max_height
               end
