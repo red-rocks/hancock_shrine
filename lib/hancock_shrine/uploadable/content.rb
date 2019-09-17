@@ -46,14 +46,7 @@ module HancockShrine::Uploadable::Content
   class_methods do
 
     def hancock_model
-      # puts 'def model'
-      # puts name.inspect
-      # puts name.sub(/Uploader$/, "").inspect
-      # puts name.sub(/Uploader$/, "").underscore.inspect
-      # puts name.sub(/Uploader$/, "").underscore.split("_").inspect
-      # puts name.sub(/Uploader$/, "").underscore.split("_")[0...-1].inspect
-      # puts "____________________________"
-      @model ||= name.sub(/Uploader$/, "").underscore.split("_")[0...-1].map(&:capitalize).join.camelize.constantize
+      @model ||= name.sub(/Uploader$/, "").underscore.split("_")[0...-1].join("_").camelize.constantize
     end
     def hancock_field_name
       @field_name ||= name.sub(/Uploader$/, "").underscore.split("_")[-1]
