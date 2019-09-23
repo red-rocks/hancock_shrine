@@ -34,7 +34,8 @@
   - value = image_tag(field.resource_url(field.thumb_method) || field.pretty_value || "", class: 'img-thumbnail')
   .preview
     .image_block
-      button.crop-btn.title_link_hint{title="Обрезать"}
+      / button.crop-btn.title_link_hint{title="Обрезать"}
+      a.btn.crop-btn.title_link_hint{title="Обрезать" data-toggle='button'}
         i.fa.fa-crop
       = value
 

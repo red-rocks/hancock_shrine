@@ -9,7 +9,7 @@ class Shrine
       def self.configure(uploader, opts = {})
       end
 
-      module FileMethods       
+      module FileMethods
 
         def inline_data(style=:original)
           if queued_for_write[style]
@@ -27,14 +27,19 @@ class Shrine
           _base64 = base64(style)
           "data:#{content_type};base64,#{_base64}" unless _base64.blank?
         end
-
-        def inline_svg
-          inline_data if svg?
-        end
+        
 
         def svg?
           !!(content_type =~ /svg/)
         end 
+
+        def image?
+          svg? or content_type.start_with?("image/")
+        end
+
+        def inline_svg
+          inline_data if svg?
+        end
         
       end
     end

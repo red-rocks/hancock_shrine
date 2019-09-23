@@ -21,7 +21,8 @@ module HancockShrine::Uploadable::Styles
 
     def process_style(pipeline:, style_name:, style_opts:, io:, context:)
 
-      pipeline = pre_process_style(pipeline, style_name, style_opts, io, context)
+      opts = {pipeline: pipeline, style_name: style_name, style_opts: style_opts, io: io, context: context}
+      pipeline = pre_process_style(opts)
 
       if style_opts.is_a?(String)
         style_opts = {
@@ -55,8 +56,9 @@ module HancockShrine::Uploadable::Styles
       if format = style_opts[:format]
         pipeline = pipeline.convert(format)
       end
-
-      pipeline = post_process_style(pipeline, style_name, style_opts, io, context)
+      
+      opts = {pipeline: pipeline, style_name: style_name, style_opts: style_opts, io: io, context: context}
+      pipeline = post_process_style(opts)
 
       pipeline.call!
     end

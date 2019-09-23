@@ -34,7 +34,9 @@ module HancockShrine
       )
       @plugins.delete 'backgrounding' # TEMP
       # @plugins.delete 'hancock_versions' # TEMP
-      @plugins.delete 'hancockable' # TEMP
+      # @plugins.delete 'hancockable' # TEMP
+
+      @plugins.delete 'moving' # shrine 3.0
       
 
       @plugin_options = {

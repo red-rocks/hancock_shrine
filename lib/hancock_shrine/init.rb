@@ -7,7 +7,7 @@ Shrine.storages = {
 }
 
 # Shrine.plugin :logging, logger: Rails.logger
-Shrine.plugin :mongoid # or :activerecord
+Shrine.plugin :mongoid if defined?(Mongoid) # or :activerecord 
 Shrine.plugin :determine_mime_type
 Shrine.plugin :cached_attachment_data # for retaining the cached file across form redisplays
 Shrine.plugin :restore_cached_data # re-extract metadata when attaching a cached file
