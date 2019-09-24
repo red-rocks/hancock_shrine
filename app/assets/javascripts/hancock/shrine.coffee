@@ -39,7 +39,9 @@ window.hancock_cms.shrine.fileUpload = (fileInput) ->
     autoProceed: true
     allowMultipleUploads: true
     locale: window.Uppy.locales.ru_RU
-  # ).use(Uppy.DragDrop, target: fileInput.parentNode
+    restrictions: 
+      maxNumberOfFiles: 1
+  ).use(Uppy.DragDrop, target: fileInput.parentNode.querySelector('.dropzone')
   ).use(Uppy.FileInput, target: fileInput.parentNode
   ).use(Uppy.Informer, target: fileInput.parentNode
   ).use(Uppy.ProgressBar, target: (imagePreview || fileInput).parentNode
@@ -159,6 +161,28 @@ window.hancock_cms.shrine.getModal = ()->
   dialog
 
 
+
+$(document).on "dragenter", ".hancock_shrine_type.no-jcrop", (e)->
+  fieldWrapper = $(e.currentTarget).closest(".hancock_shrine_type")
+  fieldWrapper.addClass('draged')
+  dropzone = fieldWrapper.find('.dropzone')
+  dropzone.removeClass('hidden')
+  
+$(document).on "dragleave", ".hancock_shrine_type.no-jcrop.draged", (e)->
+  fieldWrapper = $(e.currentTarget).closest(".hancock_shrine_type")
+  nextTarget = $(e.fromElement)
+  if nextTarget.closest(fieldWrapper).length == 0
+    fieldWrapper.removeClass('draged')
+    dropzone = fieldWrapper.find('.dropzone')
+    dropzone.addClass('hidden')
+  
+# # TODO
+# $(document).on "drop", ".hancock_shrine_type.no-jcrop, .hancock_shrine_type.no-jcrop *", (e)->
+#   e.preventDefault()
+#   return false
+
+
+
 $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
   e.preventDefault()
   fieldWrapper = $(e.currentTarget).closest('.hancock_shrine_type')
@@ -228,22 +252,7 @@ $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
     e.preventDefault()
     $image = dialogBody.find('#cropper-image')
     cropper = $image.data('cropper')
-
-    console.log(cropper)
-
-    ####OLD
-    # scaleX = cropper.imageData.naturalWidth / cropper.imageData.width
-    # scaleY = cropper.imageData.naturalHeight / cropper.imageData.height
-    # cropBoxData = cropper.cropBoxData
-
-    # cropData = {
-    #   crop_x: cropBoxData.left * scaleX
-    #   crop_y: cropBoxData.top * scaleX
-    #   crop_w: cropBoxData.width * scaleX
-    #   crop_h: cropBoxData.height * scaleX
-    # }
-
-    ####NEW
+    
     cropData = cropper.getData()
     cropData = {
       crop_x: cropData.x
