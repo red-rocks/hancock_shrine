@@ -41,11 +41,18 @@ window.hancock_cms.shrine.fileUpload = (fileInput) ->
     locale: window.Uppy.locales.ru_RU
     restrictions: 
       maxNumberOfFiles: 1
-  ).use(Uppy.DragDrop, target: fileInput.parentNode.querySelector('.dropzone')
-  ).use(Uppy.FileInput, target: fileInput.parentNode
+    onBeforeFileAdded: (currentFile, files)->
+      # remove file beacause replacements
+      for id, f of files
+        uppy.removeFile(id)
+      currentFile
+  )
+  if dropzone = fileInput.parentNode.querySelector('.dropzone')
+    uppy = uppy.use(Uppy.DragDrop, target: dropzone)
+  uppy = uppy.use(Uppy.FileInput, target: fileInput.parentNode
   ).use(Uppy.Informer, target: fileInput.parentNode
   ).use(Uppy.ProgressBar, target: (imagePreview || fileInput).parentNode
-  ).use(Uppy.ThumbnailGenerator, thumbnailWidth: 400)
+  )#.use(Uppy.ThumbnailGenerator, thumbnailWidth: 400) # TEMP
   
   metaFields = ['name']
   if imagePreview
@@ -61,7 +68,6 @@ window.hancock_cms.shrine.fileUpload = (fileInput) ->
     null
 
   uppy.use Uppy.XHRUpload,
-    # endpoint: '#{field.direct_upload[:url]}'
     endpoint: endpoint
     formData: true
     metaFields: metaFields
@@ -71,17 +77,13 @@ window.hancock_cms.shrine.fileUpload = (fileInput) ->
   uppy.on 'upload-success', (file, response) ->
     # read uploaded file data from the upload endpoint 
     console.log 'upload:success'
-    console.log response.body
     metadata = response.body.data or response.body
     uploadedFileData = JSON.stringify(metadata)
     # set hidden field value to the uploaded file data so that it's submitted with the form as the attachment
     hiddenInput = fileInput.parentNode.querySelector('.cache')
     hiddenInput.value = uploadedFileData
-    console.log imagePreview.src if imagePreview
-    console.log response.body.url
     imagePreview.src = response.body.url if imagePreview
-    console.log imagePreview.src if imagePreview
-
+    
     if response.body.url
       urls_list_block = $(fileInput).siblings('.urls_list_block')
       data = {original: {url: response.body.url, id: response.body.data.id}}
@@ -103,17 +105,20 @@ window.hancock_cms.shrine.fileUpload = (fileInput) ->
         crop_y: null
         crop_w: null
         crop_h: null
-      window.hancock_cms.shrine.checkCropAvailable fileInput
+      window.hancock_cms.shrine.checkCropAvailable fileInput    
+    $(fileInput).closest('.hancock_shrine_type').trigger('dragleave')
     
-   if imagePreview
+  if imagePreview
     uppy.on 'thumbnail:generated', (file, preview) ->
       console.log 'thumbnail:generated'
-      imagePreview.src = imagePreview.src or preview
-    
+      # imagePreview.src = imagePreview.src or preview
+      
     uppy.on 'upload', (data) ->
+      console.log('upload')
       console.log(data)
       imagePreview.removeAttribute 'src'
       window.hancock_cms.shrine.checkCropAvailable fileInput
+
     
   fileInput.classList.add 'uppy'
   fileInput.uppy = uppy
@@ -237,7 +242,7 @@ $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
     $image = dialogBody.find('#cropper-image')
     $image.load ->
       $image.cropper({
-        aspectRatio: JSON.parse(field.data('rails-admin-crop-options').aspectRatio),
+        aspectRatio: field.data('rails-admin-crop-options').aspectRatio,
         # viewMode: 1,
         # scalable: false,
         rotatable: false,
@@ -266,14 +271,13 @@ $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
     $cropper_form = $('#cropper-form')
     if $cropper_form.length > 0 # if "/edit" action
       $cropper_form.on "ajax:error ajax:complete", (e, xhr, status, error)->
+        console.log('uppy: ajax:error ajax:complete')
         console.log(e)
         console.log(xhr)
         console.log(status)
         console.log(error)
         if error
           alert(error)
-          console.log(error)
-          console.log(xhr)
         else
           data = xhr.responseJSON
           fieldCache.val('')
