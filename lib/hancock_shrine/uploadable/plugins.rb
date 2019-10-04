@@ -1,5 +1,12 @@
 module HancockShrine::Uploadable::Plugins
   extend ActiveSupport::Concern
+    
+  # ALLOWED_TYPES = %w[image/jpeg image/png image/jpg image/pjpeg image/svg image/webp]
+  ALLOWED_TYPES = HancockShrine.config.plugin_options[:validation_helpers][:allowed_types]
+  # MAX_SIZE      = 20*1024*1024 # 20 MB
+  # MAX_SIZE      = 15*1024*1024 # 15 MB
+  # MAX_SIZE      = 10*1024*1024 # 10 MB
+  MAX_SIZE      = HancockShrine.config.plugin_options[:validation_helpers][:max_size]
 
   included do |base|
 
@@ -34,11 +41,26 @@ module HancockShrine::Uploadable::Plugins
         if plugin_name == :validation_helpers
           if defined?(base) and base and defined?(base::Attacher) and base::Attacher
             base::Attacher.validate do
-              validate_max_size HancockShrine::Uploadable::MAX_SIZE
-              if validate_mime_type_inclusion(HancockShrine::Uploadable::ALLOWED_TYPES)
-                validate_max_width store.max_width
-                validate_max_height store.max_height
+              if base::MAX_SIZE
+                validate_max_size base::MAX_SIZE 
               end
+              
+              # TODO
+              unless base::ALLOWED_TYPES.blank?
+                if validate_mime_type_inclusion(base::ALLOWED_TYPES)
+                  # if file["width"] and store.max_width
+                  
+                  if store.max_width
+                    validate_max_width store.max_width
+                  end
+                  
+                  if store.max_height
+                    validate_max_height store.max_height
+                  end
+
+                end
+              end
+              
             end
           end
         elsif plugin_name == :processing
