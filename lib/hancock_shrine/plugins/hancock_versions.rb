@@ -33,7 +33,8 @@ class Shrine
           else
             default_version_name
           end
-          (self[version] || self[:original]).send(name, *args, &block)
+          target = (self[version] || self[:original])
+          target&.send(name, *args, &block) # TODO (hardfix)
         end
 
         # HARDFIX

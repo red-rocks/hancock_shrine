@@ -12,4 +12,12 @@ class HancockShrine::Uploader < Shrine
   # include HancockShrine::Uploadable::InstanceMethods
   # extend HancockShrine::Uploadable::ClassMethods
 
+  
+  
+  # TODO - maybe not need
+  # direct_upload
+  include ::HancockShrine::Uploadable::UploadEndpoint
+
+  include ::HancockShrine::Uploadable::Deriviations::Crop
+
 end
