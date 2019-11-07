@@ -11,10 +11,6 @@ class HancockUploader < HancockShrine::Uploader
   #   super(subclass)
   # end
 
-  puts 'HancockShrine::Uploadable::UploadEndpoint'
-  puts (self < HancockShrine::Uploadable::UploadEndpoint).inspect
   include ::HancockShrine::Uploadable::UploadEndpoint
-  puts (self < HancockShrine::Uploadable::UploadEndpoint).inspect
-  puts 'HancockShrine::Uploadable::UploadEndpoint'
   
 end
