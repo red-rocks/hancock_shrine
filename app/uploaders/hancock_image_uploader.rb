@@ -1,5 +1,5 @@
 # class HancockUploader < Shrine
-class HancockUploader < HancockShrine::Uploader
+class HancockImageUploader < HancockShrine::Uploader
   # extend ActiveSupport::Concern
   
   include HancockShrine::BaseUploader
@@ -11,10 +11,8 @@ class HancockUploader < HancockShrine::Uploader
   #   super(subclass)
   # end
 
-  puts 'HancockShrine::Uploadable::UploadEndpoint'
-  puts (self < HancockShrine::Uploadable::UploadEndpoint).inspect
+
   include ::HancockShrine::Uploadable::UploadEndpoint
-  puts (self < HancockShrine::Uploadable::UploadEndpoint).inspect
-  puts 'HancockShrine::Uploadable::UploadEndpoint'
-  
+  include ::HancockShrine::Uploadable::Deriviations::Crop
+
 end
