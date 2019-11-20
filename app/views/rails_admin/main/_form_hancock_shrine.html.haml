@@ -24,19 +24,24 @@
   - (cache_method = field.cache_method.clone).slice!("cached_")
   = form.hidden_field(field.method_name, value: form.object.send(cache_method).to_json)
 
-- use_crop = (field.pretty_value and exist and field.image? and !field.svg?)
--# - _add_class = (use_crop ? "jcrop_data_value" : "")
-- _add_class = (use_crop ? "crop_data_value" : "")
-.toggle{class: "#{_add_class}", style: ('display:none;' if file and field.delete_method and form.object.send(field.delete_method) == '1')}
-  - value = image_tag(field.resource_url(field.thumb_method), class: 'img-thumbnail') rescue field.pretty_value
-  - if value
-    .preview
-      - if field.respond_to?(:svg?) and !field.svg? and exist
-        - if use_crop
-          .title_link_hint{title: "Обрезать"}
-            %i.fa.fa-crop
-        .image_block
-          = value
+- if field.image?
+  - use_crop = (field.pretty_value and exist and field.image? and !field.svg?)
+  -# - _add_class = (use_crop ? "jcrop_data_value" : "")
+  - _add_class = (use_crop ? "crop_data_value" : "")
+  .toggle{class: "#{_add_class}", style: ('display:none;' if file and field.delete_method and form.object.send(field.delete_method) == '1')}
+    - value = image_tag(field.resource_url(field.thumb_method), class: 'img-thumbnail') rescue field.pretty_value
+    - if value
+      .preview
+        - if field.respond_to?(:svg?) and !field.svg? and exist
+          - if use_crop
+            .title_link_hint{title: "Обрезать"}
+              %i.fa.fa-crop
+          .image_block
+            = value
+- else
+  -# TODO: filetype preview?
+
+
 = form.file_field(field.name, field.html_attributes.reverse_merge({data: { image_file: true, fileupload: true, rails_admin_crop_options: rails_admin_crop_options }}))
 
 - model_name = form.object.class.to_param.gsub("::", "~").underscore
@@ -47,7 +52,8 @@
 
 - if field.optional? && field.errors.blank? && file && field.delete_method
   %br
-  %a.btn.btn-info.btn-remove-image{href: '#', :'data-toggle' => 'button', role: 'button', onclick: "$(this).siblings('[type=checkbox]').click(); $(this).siblings('.toggle').toggle('slow'); jQuery(this).toggleClass('btn-danger btn-info'); return false;"}
+  -# %a.btn.btn-info.btn-remove-image{href: '#', :'data-toggle' => 'button', role: 'button', onclick: "$(this).siblings('[type=checkbox]').click(); $(this).siblings('.toggle').toggle('slow'); jQuery(this).toggleClass('btn-danger btn-info'); return false;"}
+  %a.btn.btn-info.btn-remove-file{href: '#', :'data-toggle' => 'button', role: 'button', onclick: "$(this).siblings('[type=checkbox]').click(); $(this).siblings('.toggle').toggle('slow'); jQuery(this).toggleClass('btn-danger btn-info'); return false;"}
     %i.icon-white.icon-trash
     = I18n.t('admin.actions.delete.menu').capitalize + " #{field.label.downcase}"
 

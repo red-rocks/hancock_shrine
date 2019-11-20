@@ -33,7 +33,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "hancock_cms"
-  spec.add_dependency "shrine"
+  spec.add_dependency "shrine", ">= 3.0"
   spec.add_dependency "ack_rails_admin_jcrop"
 
   spec.add_development_dependency "bundler"

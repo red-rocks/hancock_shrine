@@ -48,6 +48,7 @@ class Shrine
       module ClassMethods
 
         def uploaded_file(object, &block)
+          # puts 'def uploaded_file(object, &block)'
           if object.is_a?(Hash) && object.values.none? { |value| value.is_a?(String) }
             versions_hash = object.inject({}) do |result, (name, value)|
               result.merge!(name.to_sym => uploaded_file(value, &block))
@@ -69,6 +70,7 @@ class Shrine
 
         private
         def convert_after_read(value)
+          # puts 'convert_after_read(value)'
           value = {original: value} if value.is_a?(UploadedFile)
           VersionsWrapper.new(value, default_version_name)
         end

@@ -37,7 +37,10 @@ module HancockShrine
       # @plugins.delete 'hancockable' # TEMP
 
       @plugins.delete 'moving' # shrine 3.0
-      
+
+      @plugins.delete 'processing' # shrine 3.0
+      @plugins[@plugins.index('hancock_versions')] = 'hancock_derivatives' rescue @plugins << 'processing' # shrine 4.0
+      @plugins.compact!
 
       @plugin_options = {
         saver: {
@@ -46,14 +49,43 @@ module HancockShrine
           }
         },
         remote_url: {
-          max_size: 20*1024*1024
+          max_size: 100*1024*1024,
+          max_image_size: 20*1024*1024,
         },
         store_dimensions: {
           analyzer: (@vips ? :ruby_vips : :fastimage)
         },
         validation_helpers: {
-          allowed_types: %w[image/jpeg image/png image/jpg image/pjpeg image/svg image/webp],
-          max_size: 20*1024*1024,
+          allowed_image_types: %w[image/jpeg image/png image/jpg image/pjpeg image/svg image/webp],
+          allowed_types: [
+            'application/vnd.oasis.opendocument.text',
+            'application/vnd.oasis.opendocument.spreadsheet',
+            'application/vnd.oasis.opendocument.presentation',
+            'application/vnd.oasis.opendocument.graphics',
+          
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document:',
+          
+            'application/pdf',
+            'text/pdf',
+            'application/rtf',
+            'text/rtf',
+          
+            'application/zip',
+            'application/gzip',
+            'application/xml',
+            'application/x-rar',
+            'application/x-rar-compressed',
+            'application/x-tar',
+          
+            'text/plain',
+            'text/html'
+          ], # TODO
+          max_size: 100*1024*1024,
+          max_image_size: 20*1024*1024,
           max_width: 6000,
           max_height: 6000
         }

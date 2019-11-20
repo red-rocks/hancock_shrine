@@ -16,26 +16,36 @@ module HancockShrine::Uploadable::UploadEndpoint
 
 
   class_methods do
+    ##### TODO ######
+    # params: [
+    #   model,
+    #   id,
+    #   name
+    # ]
+    ##############3
     def upload_context_processing(request)
       params = request.params.with_indifferent_access
       context = {}
-      id = params[:id]
-      unless id.blank?
-        context[:record] ||= hancock_model.find(id)
-      else
-        context[:model] ||= hancock_model unless context[:record]
-        context[:name] ||= hancock_field_name
+      model_name = params[:model_name]
+      hancock_model = model_name.gsub("~", "::").camelize.constantize rescue nil
+      if hancock_model
+        id = params[:id]
+        unless id.blank?
+          context[:record] ||= hancock_model.find(id)
+        else
+          context[:model] ||= hancock_model unless context[:record]
+        end
       end
+      context[:field_name] ||= params[:field_name]
+      context[:metadata] = {}
 
-      value = if request.params.key?("file")
-        request.params["file"]
-      elsif request.params["files"].is_a?(Array)
-        request.params["files"].first
+      value = if params.key?("file")
+        params["file"]
+      elsif params["files"].is_a?(Array)
+        params["files"].first
       end
-      if value
-        puts value.inspect
-      
-        context[:metadata] = {"crop" => {}}
+      if value and (context[:record] || context[:model]).try("#{params[:field_name]}_is_image?")
+        context[:metadata].merge!({"crop" => {}})
         crop_param_names = [:crop_x, :crop_y, :crop_w, :crop_h]
         if crop_param_names.all? { |param| params[param].present? and !params[param].blank? and params[param] != "null"  }
           crop_param_names.each do |param|

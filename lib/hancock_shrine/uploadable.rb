@@ -7,7 +7,8 @@ module HancockShrine::Uploadable
 
     include Options
 
-    include Styles
+    # include Styles
+    include Derivatives
 
     include Plugins
 
