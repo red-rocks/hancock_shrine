@@ -3,14 +3,7 @@ module HancockShrine::Uploadable::Content
 
   included do
 
-    def hancock_model
-      self.class.model
-    end
-    def hancock_field_name
-      self.class.field_name
-    end
-
-
+    
     def vips?
       HancockShrine.config.vips
     end
@@ -39,17 +32,6 @@ module HancockShrine::Uploadable::Content
       elsif vips?
         ImageProcessing::Vips.source(source).saver(saver_opts)
       end
-    end
-
-  end
-
-  class_methods do
-
-    def hancock_model
-      @model ||= name.sub(/Uploader$/, "").underscore.split("_")[0...-1].join("_").camelize.constantize
-    end
-    def hancock_field_name
-      @field_name ||= name.sub(/Uploader$/, "").underscore.split("_")[-1]
     end
 
   end

@@ -65,10 +65,27 @@ module RailsAdmin
 
           register_instance_option :crop_options do
             "#{name}_crop_options".to_sym
-          end
+          end          
 
           register_instance_option :direct_upload do
-            nil
+            begin
+              model = bindings[:abstract_model]&.model || bindings[:object]&.class
+              uploader_class = model.get_uploader_class(name.to_s, image?)
+              if uploader_class
+                context = (bindings[:view] || bindings[:controller])
+                path_method = uploader_class.endpoint_name rescue nil
+                _params = bindings[:controller]&.params || {}
+                attrs = {
+                  model_name: _params[:model_name] || model.rails_admin_model,
+                  id: _params[:id] || (bindings[:object]&.persisted? ? bindings[:object].id : nil),
+                  field_name: name
+                }.compact
+                url = (path_method and context&.main_app&.try("upload_#{path_method}_path", attrs))
+                (url and {url: url})
+              end
+            rescue
+              nil
+            end
           end
 
           register_instance_option :svg? do
@@ -97,6 +114,10 @@ module RailsAdmin
           end
           register_instance_option :cache_method do
             "cached_#{name}_data"
+          end
+
+          register_instance_option :image? do
+            value.image?
           end
 
 

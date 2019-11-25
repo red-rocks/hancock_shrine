@@ -18,7 +18,7 @@ window.hancock_cms.shrine.checkCropAvailable = (fileInput) ->
   cacheField = fileInput.parentNode.querySelector('.cache')
   uppy = fileInput.uppy
   cropLink = fileInput.parentNode.querySelector('.crop-btn')
-  removeLink = fileInput.parentNode.querySelector('.btn-remove-image')
+  removeLink = fileInput.parentNode.querySelector('.btn-remove-file')
   if cacheField.value.length == 0 and uppy.getFiles().length == 0 and !fileInput.dataset.original
     $(cropLink).hide()
     $(removeLink).hide()
@@ -292,7 +292,11 @@ $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
           urls_list_block = fieldCache.siblings('.urls_list_block')
           for style, style_opts of data
             a = urls_list_block.find(".url_block.style-#{style} a")
-            a.attr('href', style_opts.url).text(style_opts.id)
+            unless a.length
+              div = $('<div class="url_block style-#{style}"></div>').appendTo(urls_list_block) 
+              div.html("<span>#{style}:</span>")
+              a = $('<a></a>').appendTo(div) 
+            a.attr('href', style_opts.url).text(style_opts.id).attr("target", "_blank")
         dialog.modal('hide')
       ########
       $cropper_form.find('[name="crop_x"]').val(cropData.crop_x)

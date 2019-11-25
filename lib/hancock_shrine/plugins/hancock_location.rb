@@ -20,6 +20,10 @@ class Shrine
         end
 
         def hancock_location(io, context)
+          # puts 'def hancock_location(io, context)'
+          # puts context.keys.inspect
+          # puts context.inspect
+          
           if context[:record]
             type = class_location(context[:record].class) if context[:record].class.name
             if context[:record].respond_to?(:id)
@@ -32,15 +36,14 @@ class Shrine
               
           end
           # name = context[:name]
-          name = context[:name].to_s.pluralize
-          version = context[:version]
-          
-          dirname, slash, basename = basic_location(io, metadata: context[:metadata]).rpartition("/")
+          field_name = context[:field_name].to_s.pluralize
+          version = context[:version] || context [:derivative] # versions and derivatives compatibility
+          dirname, slash, basename = basic_location(io, metadata: context[:metadata] || {}).rpartition("/")
           # basename = "#{context[:version]}-#{basename}" if context[:version]
-
+          
           extension   = ".#{io.extension}" if io.is_a?(UploadedFile) && io.extension
           extension ||= File.extname(extract_filename(io).to_s).downcase
-          original = (context[:record] and context[:name] and context[:record].send(context[:name]))
+          original = (context[:record] and context[:field_name] and context[:record].send(context[:field_name]))
           # if original and original.respond_to?(:[])
           if original and original.is_a?(Hash)
             original = original[:original]
@@ -65,7 +68,13 @@ class Shrine
           # [type, id_partition_in_8, name, original].compact.join("/")
           # [type, id_partition, name, version, basename + extension].compact.join("/")
           # [type, name, id_partition, version, basename + extension].compact.join("/") # PAPERCLIP fallback
-          [type, name, id_partition, version, basename + extension].reject(&:blank?).join("/") # PAPERCLIP fallback
+          [
+            type, 
+            field_name, 
+            id_partition, 
+            version, 
+            (basename + extension)
+          ].reject(&:blank?).join("/") # PAPERCLIP fallback
         end
 
         private

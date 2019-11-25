@@ -13,8 +13,15 @@ class Shrine
 
       def self.load_dependencies(uploader, *)
         uploader.plugin :add_metadata
-        uploader.add_metadata :crop do |io|
-          {}
+        uploader.add_metadata :crop do |io, context|
+          puts 'uploader.add_metadata :crop do |io, context|'
+          # puts context.inspect
+          puts context.keys.join(" _ ")
+          # puts context.inspect
+          puts context['metadata']
+          puts context[:metadata]
+          puts 
+          ((context and context[:metadata] and (context[:metadata][:crop] || context[:metadata]['crop'])) ||  {})
         end
       end
 
@@ -23,7 +30,8 @@ class Shrine
 
         def extract_metadata(io, **options)
           metadata = super
-          metadata[:crop] = (io && io.data && io.data["metadata"] && io.data["metadata"]["crop"]) rescue nil
+          _metadata = (io && io.data && (io.data["metadata"] || io.data[:metadata])) rescue {}
+          metadata[:crop] = (_metadata["crop"] || _metadata[:crop]) rescue nil
           metadata.compact
         end
 
@@ -50,7 +58,7 @@ class Shrine
         end
 
         def cropping(pipeline, io, context)
-          _crop_params = crop_params(context[:record]) 
+          _crop_params = crop_params(context[:record])
           if _crop_params.blank?
             _crop_params = io.metadata[:crop] || io.metadata["crop"]
             unless _crop_params.blank?
@@ -71,10 +79,71 @@ class Shrine
               crop_h: _crop_params[3],
             }
             pipeline = pipeline.crop(*_crop_params)
-          end          
+          end
           pipeline
         end
         
+      end
+
+      # TODO: DERIVATIVES
+      module AttacherMethods
+
+        def crop_params(target = nil)
+
+          return nil if target.nil?
+          return @crop_params if @crop_params
+          w = ((target.respond_to?(:crop_w) and target.crop_w) ? target.crop_w.to_i : nil)
+          h = ((target.respond_to?(:crop_h) and target.crop_h) ? target.crop_h.to_i : nil)
+          x = ((target.respond_to?(:crop_x) and target.crop_x) ? target.crop_x.to_i : nil)
+          y = ((target.respond_to?(:crop_y) and target.crop_y) ? target.crop_y.to_i : nil)
+          
+          @crop_params = if w and h and x and y
+            if imagick?
+              # IMagick / RMagick / ImageMagick
+              x = "+#{x}" if x >= 0
+              y = "+#{y}" if y >= 0
+              ["#{w}x#{h}#{x}#{y}"]
+            elsif vips?
+              # VIPS
+              [x, y, w, h].map(&:to_i) 
+            end
+          end
+        end
+
+        def cropping(pipeline, io, context)
+          metadata = if io and io.respond_to?(:metadata) and io.metadata
+            io.metadata.merge(context[:metadata] || {})
+          else
+            (context && context[:metadata]) || {}
+          end
+          _crop_params = crop_params(context[:record]) 
+          if _crop_params.blank?
+            _crop_params = metadata[:crop] || metadata["crop"]
+            unless _crop_params.blank?
+              _crop_params = _crop_params.with_indifferent_access
+              _crop_params = [
+                _crop_params[:crop_x],
+                _crop_params[:crop_y],
+                _crop_params[:crop_w],
+                _crop_params[:crop_h]
+              ]
+            end
+          end
+          unless _crop_params.blank?
+            metadata ||= {}
+            metadata[:crop] ||= {}
+            metadata[:crop].merge({
+              crop_x: _crop_params[0],
+              crop_y: _crop_params[1],
+              crop_w: _crop_params[2],
+              crop_h: _crop_params[3],
+            })
+            pipeline = pipeline.crop(*_crop_params)
+          end
+          io.metadata = metadata if io and io.respond_to?(:metadata)
+          context[:metadata] = metadata if context
+          return pipeline, io, context
+        end
       end
 
 

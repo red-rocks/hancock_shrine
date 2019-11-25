@@ -17,47 +17,51 @@
   - if form.object.respond_to?(_method)
     - rails_admin_crop_options = form.object.send(field.crop_options.to_sym).to_json
   - else
-    - rails_admin_crop_options = {}
+    / - rails_admin_crop_options = {}
+    - rails_admin_crop_options = nil
     
 - file = form.object.send(field.method_name).presence
-- exist = (file and file.exists?)
+- exist = (file and file.blank?)
 
 - (cache_method = field.cache_method.clone).slice!("cached_")
 - cache = form.object.send(field.cache_method)
 = form.hidden_field(field.method_name, value: (cache and cache.to_json), class: 'cache')
 
-- if field.direct_upload
-  - _add_class = 'crop_data_value'
+- if field.image?
+  - if field.direct_upload
+    - _add_class = 'crop_data_value'
+  - else
+    - _add_class = (field.pretty_value and !field.svg? ? "jcrop_data_value" : "")
+  .container.image-container
+    .toggle{class="#{_add_class}" style=('display:none;' if file and field.delete_method and form.object.send(field.delete_method) == '1')}
+      - value = image_tag(field.resource_url(field.thumb_method) || field.pretty_value || "", class: 'img-thumbnail')
+      .preview
+        .image_block
+          / button.crop-btn.title_link_hint{title="Обрезать"}
+          a.btn.crop-btn.title_link_hint{title="Обрезать" data-toggle='button'}
+            i.fa.fa-crop
+          = value
 - else
-  - _add_class = (field.pretty_value and !field.svg? ? "jcrop_data_value" : "")
+  -# TODO: filetype preview?
 
-.container.image-container
-  /.toggle{class="#{_add_class}" style=('display:none;' if file and field.delete_method and form.object.send(field.delete_method) == '1')}
-  .toggle{class="#{_add_class}"}
-    - value = image_tag(field.resource_url(field.thumb_method) || field.pretty_value || "", class: 'img-thumbnail')
-    .preview
-      .image_block
-        a.btn.crop-btn.title_link_hint{title="Обрезать" data-toggle='button'}
-          i.fa.fa-crop
-        = value
+/ TODO + refactoring
+.dropzone.hidden
 
-.container.actions-container
-  ruby:
-    attrs = {
-            data: {
-                    direct_upload: field.direct_upload,
-                    image_file: true,
-                    fileupload: true,
-                    rails_admin_crop_options: rails_admin_crop_options,
-                    rails_admin_jcrop_options: rails_admin_crop_options,
-                    original: field.resource_url
-            }.compact
-    }
-    attrs[:class] = 'no-uppy' unless field.direct_upload
+ruby:  
+  attrs = {
+    data: {
+      direct_upload: field.direct_upload,
+      image_file: field.image?,
+      fileupload: true, 
+      rails_admin_crop_options: rails_admin_crop_options, 
+      rails_admin_jcrop_options: rails_admin_crop_options,
+      original: field.resource_url
+    }.compact
+  }
+  attrs[:class] = 'no-uppy' unless field.direct_upload
+= form.file_field(field.name, field.html_attributes.reverse_merge(attrs))
 
-  = form.file_field(field.name, field.html_attributes.reverse_merge(attrs))
-
-
+- if field.image?
   - unless field.direct_upload
     - unless field.svg?
       - model_name = form.object.class.to_param.gsub("::", "~").underscore
@@ -65,29 +69,23 @@
       - link_data = {link: url, thumb: field.thumb_method || "original"}
       = link_to 'Edit image', '#', data: link_data, style: 'display:none', class: "jcrop_handle"
 
-  - model_name = form.object.class.to_param.gsub("::", "~").underscore
-
-  .urls_list_block
-    = link_to 'Текущие ссылки', "#", class: "urls_toggler"
-    - if file and file.respond_to?(:each_pair)
-      - file.each_pair do |s_name, data|
-        .url_block.hidden(class="style-#{s_name}")
-          span= "#{s_name}: "
-          = link_to asset_url(data.url), data.url, target: :_blank
-
-  - if field.optional? && field.errors.blank? && field.delete_method
-    br
-    a.btn.btn-info.btn-remove-image{href='#' data-toggle='button' role='button' onclick="$(this).siblings('[type=checkbox]').click(); $(this).siblings('.toggle').toggle('slow'); jQuery(this).toggleClass('btn-danger btn-info'); return false;"}
-      i.icon-white.icon-trash
-      = I18n.t('admin.actions.delete.menu').capitalize + " #{field.label.downcase}"
-
-    /= form.check_box(field.delete_method, style: 'display:none;', class: "delete-checkbox")
-
-/ TODO + refactoring
-.dropzone.hidden
+- model_name = form.object.class.to_param.gsub("::", "~").underscore
 
 
+- if field.optional? && field.errors.blank? && field.delete_method
+  br
+  / a.btn.btn-info.btn-remove-image{href='#' data-toggle='button' role='button' onclick="$(this).siblings('[type=checkbox]').click(); $(this).siblings('.toggle').toggle('slow'); jQuery(this).toggleClass('btn-danger btn-info'); return false;"}
+  a.btn.btn-info.btn-remove-file{href='#' data-toggle='button' role='button' onclick="$(this).siblings('[type=checkbox]').click(); $(this).siblings('.toggle').toggle('slow'); jQuery(this).toggleClass('btn-danger btn-info'); return false;"}
+    i.icon-white.icon-trash
+    = I18n.t('admin.actions.delete.menu').capitalize + " #{field.label.downcase}"
 
+  = form.check_box(field.delete_method, style: 'display:none;', class: "delete-checkbox")
 
-
-  
+.urls_list_block
+  = link_to 'Текущие ссылки', "#", class: "urls_toggler"
+  - styles = (form.object.try("#{field.name}_derivatives") || file)
+  - if styles and styles.respond_to?(:each_pair)
+    - styles.each_pair do |s_name, data|
+      .url_block.hidden(class="style-#{s_name}")
+        span= "#{s_name}: "
+        = link_to asset_url(data.url), data.url, target: :_blank

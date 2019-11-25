@@ -13,7 +13,8 @@ module HancockShrine::Uploadable::Deriviations
   class_methods do
 
     def derivation_endpoint_prefix
-      "upload/derivations/#{hancock_model.name.underscore}/#{hancock_field_name}"
+      # "upload/derivations/#{hancock_model.name.underscore}/#{hancock_field_name}"
+      "upload/derivations"
     end
 
   end

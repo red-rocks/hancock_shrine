@@ -3,8 +3,8 @@ module HancockShrine::Uploadable::Styles
 
   included do
 
-    def get_styles(context, action)
-      name = context[:name].to_s
+    def get_styles(context, action = :upload)
+      name = context[:field_name].to_s
       styles_method = name + "_styles"
 
       if context[:record].method(styles_method).arity == 1
