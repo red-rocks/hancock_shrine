@@ -50,22 +50,24 @@ module HancockShrine::Uploadable::Plugins
               if @is_image
                 unless base::ALLOWED_IMAGE_TYPES.blank?
                   if validate_mime_type_inclusion(base::ALLOWED_IMAGE_TYPES)
-                    # if file["width"] and store.max_width
-                    if store.max_width
+                    if file["width"] and store.max_width
+                    # if store.max_width
                       validate_max_width store.max_width
                     end
-                    if store.max_height
+                    if file["height"] and store.max_height
+                    # if store.max_height
                       validate_max_height store.max_height
                     end
                   end
 
                 else
                   if validate_mime_type_inclusion(base::ALLOWED_TYPES)
-                    # # if file["width"] and store.max_width
-                    # if store.max_width
+                    # if file["width"] and store.max_width
+                    # # if store.max_width
                     #   validate_max_width store.max_width
                     # end
-                    # if store.max_height
+                    # if file["height"] and store.max_height
+                    # # if store.max_height
                     #   validate_max_height store.max_height
                     # end
                   end
