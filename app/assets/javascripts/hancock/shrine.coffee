@@ -1,5 +1,4 @@
 #= require cropper/cropper
-#= require cropper/cropper
 
 # require babel-polyfill/polyfill
 #= require idempotent-babel-polyfill/polyfill
@@ -15,10 +14,12 @@ return if window.hancock_cms.shrine.loaded
 window.hancock_cms.shrine.loaded = true
 
 window.hancock_cms.shrine.checkCropAvailable = (fileInput) ->
-  cacheField = fileInput.parentNode.querySelector('.cache')
+  uploadWrapper =  fileInput.closest('.hancock_shrine_type')
+  return false unless uploadWrapper
+  cacheField = uploadWrapper.querySelector('.cache')
   uppy = fileInput.uppy
-  cropLink = fileInput.parentNode.querySelector('.crop-btn')
-  removeLink = fileInput.parentNode.querySelector('.btn-remove-file')
+  cropLink = uploadWrapper.querySelector('.crop-btn')
+  removeLink = uploadWrapper.querySelector('.btn-remove-file')
   if cacheField.value.length == 0 and uppy.getFiles().length == 0 and !fileInput.dataset.original
     $(cropLink).hide()
     $(removeLink).hide()
@@ -30,8 +31,9 @@ window.hancock_cms.shrine.checkCropAvailable = (fileInput) ->
 window.hancock_cms.shrine.fileUpload = (fileInput) ->
   fileInput = fileInput[0] unless fileInput instanceof Node
   return fileInput.uppy if fileInput.uppy
-
-  imagePreview = fileInput.parentNode.querySelector('.img-thumbnail')
+  uploadWrapper =  fileInput.closest('.hancock_shrine_type')
+  return false unless uploadWrapper
+  imagePreview = uploadWrapper.querySelector('.img-thumbnail')
   fileInput.style.display = 'none'
   # uppy will add its own file input
   uppy = Uppy.Core(
@@ -47,7 +49,7 @@ window.hancock_cms.shrine.fileUpload = (fileInput) ->
         uppy.removeFile(id)
       currentFile
   )
-  if dropzone = fileInput.parentNode.querySelector('.dropzone')
+  if dropzone = uploadWrapper.querySelector('.dropzone')
     uppy = uppy.use(Uppy.DragDrop, target: dropzone)
   uppy = uppy.use(Uppy.FileInput, target: fileInput.parentNode
   ).use(Uppy.Informer, target: fileInput.parentNode
@@ -80,7 +82,7 @@ window.hancock_cms.shrine.fileUpload = (fileInput) ->
     metadata = response.body.data or response.body
     uploadedFileData = JSON.stringify(metadata)
     # set hidden field value to the uploaded file data so that it's submitted with the form as the attachment
-    hiddenInput = fileInput.parentNode.querySelector('.cache')
+    hiddenInput = uploadWrapper.querySelector('.cache')
     hiddenInput.value = uploadedFileData
     imagePreview.src = response.body.url if imagePreview
     
@@ -168,13 +170,15 @@ window.hancock_cms.shrine.getModal = ()->
 
 
 $(document).on "dragenter", ".hancock_shrine_type.no-jcrop", (e)->
-  fieldWrapper = $(e.currentTarget).closest(".hancock_shrine_type")
+#  fieldWrapper = $(e.currentTarget).parentNode
+  fieldWrapper = $(e.currentTarget)
   fieldWrapper.addClass('draged')
   dropzone = fieldWrapper.find('.dropzone')
   dropzone.removeClass('hidden')
-  
+
 $(document).on "dragleave", ".hancock_shrine_type.no-jcrop.draged", (e)->
-  fieldWrapper = $(e.currentTarget).closest(".hancock_shrine_type")
+#  fieldWrapper = $(e.currentTarget).parentNode
+  fieldWrapper = $(e.currentTarget)
   nextTarget = $(e.fromElement)
   if nextTarget.closest(fieldWrapper).length == 0
     fieldWrapper.removeClass('draged')
@@ -334,10 +338,18 @@ $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
             a.attr('href', style_opts.url).text(style_opts.id)
       
         dialog.modal('hide')
-      
 
   cancelButton.on 'click', (e)->
     e.preventDefault()
     dialog.modal('hide')
   
   return false
+
+$(document).on "click", ".hancock_shrine_type .btn-remove-file", (e)->
+  checkbox = $(e.currentTarget).nextAll('.delete-checkbox')
+  console.log(checkbox)
+  if checkbox[0].checked
+    $('.hancock_shrine_type').addClass('delete-image-marker')
+  else
+    $('.hancock_shrine_type').removeClass('delete-image-marker')
+

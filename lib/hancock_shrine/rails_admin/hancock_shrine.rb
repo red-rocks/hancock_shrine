@@ -11,7 +11,10 @@ module RailsAdmin
           end
 
           register_instance_option :css_class do
-            direct_upload ? "#{self.name}_field no-jcrop" : "#{self.name}_field"
+            classes = []
+            classes << (direct_upload ? "#{self.name}_field no-jcrop direct-upload" : "#{self.name}_field")
+            classes << (image? ? "is-image" : "")
+            classes.join(" ")
           end
 
           # register_instance_option :process_watermark_toggler_method do
