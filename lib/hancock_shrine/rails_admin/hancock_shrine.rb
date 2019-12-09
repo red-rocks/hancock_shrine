@@ -99,9 +99,14 @@ module RailsAdmin
             if @styles.nil?
               @styles = []
               if value
-                @styles = value.keys if value.is_a?(Hash)
+                if value.is_a?(Hash)
+                  @styles = value.keys 
+                elsif bindings and bindings[:object] and bindings[:object] and bindings and bindings[:object]
+                  @styles = bindings[:object].try("#{name}_styles")&.keys || []
+                end
               end
             end
+            @styles << :original unless @styles.include?(:original)
             @styles
           end
           register_instance_option :thumb_method do
@@ -126,8 +131,10 @@ module RailsAdmin
 
 
           def resource_url(thumb = false)
-            return nil unless (attachment = bindings[:object].send(name)).present?
-            thumb.present? ? (attachment[thumb] || attachment).url : attachment.url
+            # return nil unless (attachment = bindings[:object].send(name)).present?
+            # thumb.present? ? (attachment[thumb] || attachment).url : attachment.url
+
+            thumb.present? ? bindings[:object].send(name, thumb)&.url : bindings[:object].send(name)&.url
           end
 
         end

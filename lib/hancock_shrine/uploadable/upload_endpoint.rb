@@ -55,6 +55,7 @@ module HancockShrine::Uploadable::UploadEndpoint
           end
         end
       end
+      
       context
     end
     def upload_context_url(object, request)

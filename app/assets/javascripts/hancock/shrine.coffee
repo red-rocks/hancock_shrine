@@ -20,12 +20,17 @@ window.hancock_cms.shrine.checkCropAvailable = (fileInput) ->
   uppy = fileInput.uppy
   cropLink = uploadWrapper.querySelector('.crop-btn')
   removeLink = uploadWrapper.querySelector('.btn-remove-file')
-  if cacheField.value.length == 0 and uppy.getFiles().length == 0 and !fileInput.dataset.original
+  previewContainer = uploadWrapper.querySelector('.preview-container')
+  
+  if (cacheField.value.length == 0 and uppy.getFiles().length == 0 and !fileInput.dataset.original) or (removeLink and removeLink.classList.contains("active"))
     $(cropLink).hide()
-    $(removeLink).hide()
+    if removeLink and !removeLink.classList.contains("active")
+      $(removeLink).hide()
+    previewContainer.classList.add("empty")
   else
     $(cropLink).show()
     $(removeLink).show()
+    previewContainer.classList.remove("empty")
 
 
 window.hancock_cms.shrine.fileUpload = (fileInput) ->
@@ -78,7 +83,6 @@ window.hancock_cms.shrine.fileUpload = (fileInput) ->
 
   uppy.on 'upload-success', (file, response) ->
     # read uploaded file data from the upload endpoint 
-    console.log 'upload:success'
     metadata = response.body.data or response.body
     uploadedFileData = JSON.stringify(metadata)
     # set hidden field value to the uploaded file data so that it's submitted with the form as the attachment
@@ -87,44 +91,44 @@ window.hancock_cms.shrine.fileUpload = (fileInput) ->
     imagePreview.src = response.body.url if imagePreview
     
     if response.body.url
-      urls_list_block = $(fileInput).siblings('.urls_list_block')
+      urls_list_block = $(uploadWrapper).find('.urls_list_block')
       data = {original: {url: response.body.url, id: response.body.data.id}}
       for style, style_opts of data
-        a = urls_list_block.find(".url_block.style-#{style} a")
+        a = urls_list_block.find(".urls_list .url_block.style-#{style} a")
         if a.length == 0
           span = "<span>#{style}: </span>"
           tag_a = "<a target='_blank'></a>"
-          urls_list_block.append("<div class='url_block style-#{style}'>#{span}#{tag_a}</div>")
-          a = urls_list_block.find(".url_block.style-#{style} a")
+          urls_list_block.find(".urls_list").append("<div class='url_block style-#{style}'>#{span}#{tag_a}</div>")
+          a = urls_list_block.find(".urls_list .url_block.style-#{style} a")
         a.attr('href', style_opts.url).text(style_opts.id)
     
   uppy.on 'file-added', (file) ->
-    console.log 'Added file', file
-    # uppy.setMeta({cached_metadata: null}))
+    # console.log 'Added file', file
+    # # uppy.setMeta({cached_metadata: null}))
     if imagePreview
       uppy.setMeta
         crop_x: null
         crop_y: null
         crop_w: null
         crop_h: null
-      window.hancock_cms.shrine.checkCropAvailable fileInput    
+    window.hancock_cms.shrine.checkCropAvailable fileInput    
     $(fileInput).closest('.hancock_shrine_type').trigger('dragleave')
     
   if imagePreview
     uppy.on 'thumbnail:generated', (file, preview) ->
-      console.log 'thumbnail:generated'
-      # imagePreview.src = imagePreview.src or preview
+      # console.log 'thumbnail:generated'
+      # # imagePreview.src = imagePreview.src or preview
       
     uppy.on 'upload', (data) ->
-      console.log('upload')
-      console.log(data)
+      # console.log('upload')
+      # console.log(data)
       imagePreview.removeAttribute 'src'
       window.hancock_cms.shrine.checkCropAvailable fileInput
 
     
   fileInput.classList.add 'uppy'
   fileInput.uppy = uppy
-  window.hancock_cms.shrine.checkCropAvailable fileInput if imagePreview
+  window.hancock_cms.shrine.checkCropAvailable fileInput
   uppy
 
 
@@ -194,7 +198,9 @@ $(document).on "dragleave", ".hancock_shrine_type.no-jcrop.draged", (e)->
 
 $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
   e.preventDefault()
-  fieldWrapper = $(e.currentTarget).closest('.hancock_shrine_type')
+  uploadWrapper = $(e.currentTarget).closest('.hancock_shrine_type')
+  imagePreview = uploadWrapper.find('.img-thumbnail')
+
   remoteForm = $.ra.remoteForm()
   dialog = window.hancock_cms.shrine.getModal()
   dialogTitle = dialog.find('.modal-header-title')
@@ -206,8 +212,8 @@ $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
   saveButton.text("Обрезать")
   cancelButton.text("Отменить")
 
-  field = fieldWrapper.find('.uppy[type=file]')
-  fieldCache = fieldWrapper.find('.cache[type=hidden]')
+  field = uploadWrapper.find('.uppy[type=file]')
+  fieldCache = uploadWrapper.find('.cache[type=hidden]')
   if fieldCache.val()
     cached = JSON.parse(fieldCache.val())
     is_stored = cached.storage == "store"
@@ -275,11 +281,11 @@ $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
     $cropper_form = $('#cropper-form')
     if $cropper_form.length > 0 # if "/edit" action
       $cropper_form.on "ajax:error ajax:complete", (e, xhr, status, error)->
-        console.log('uppy: ajax:error ajax:complete')
-        console.log(e)
-        console.log(xhr)
-        console.log(status)
-        console.log(error)
+        # console.log('uppy: ajax:error ajax:complete')
+        # # console.log(e)
+        # # console.log(xhr)
+        # # console.log(status)
+        # # console.log(error)
         if error
           alert(error)
         else
@@ -287,17 +293,14 @@ $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
           fieldCache.val('')
           field.data('original', data.original.url)
           
-          console.log(data)
           thumb = (data.thumb || data.thumbnail || data.main || data.original)
-          console.log(thumb)
-          preview = fieldCache.siblings('.toggle').find('.preview img')
-          preview.attr('src', thumb.url)
+          imagePreview.attr('src', thumb.url)
 
-          urls_list_block = fieldCache.siblings('.urls_list_block')
+          urls_list_block = uploadWrapper.find('.urls_list_block')
           for style, style_opts of data
-            a = urls_list_block.find(".url_block.style-#{style} a")
+            a = urls_list_block.find(".urls_list .url_block.style-#{style} a")
             unless a.length
-              div = $('<div class="url_block style-#{style}"></div>').appendTo(urls_list_block) 
+              div = $("<div class='url_block style-#{style}'></div>").appendTo(urls_list_block.find('.urls_list')) 
               div.html("<span>#{style}:</span>")
               a = $('<a></a>').appendTo(div) 
             a.attr('href', style_opts.url).text(style_opts.id).attr("target", "_blank")
@@ -316,24 +319,24 @@ $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
 
       files = uppy.getFiles()
       uppy.retryUpload(files[files.length-1].id).then (result) -> 
-        console.info('Successful uploads:', result.successful)
+        # console.info('Successful uploads:', result.successful)
 
         if (result.failed.length > 0) 
-          console.error('Errors:')
+          # console.error('Errors:')
           result.failed.forEach (file) -> 
-            console.error(file.error)
+            # console.error(file.error)
 
-        console.log('result')
-        console.log(result)
+        # console.log('result')
+        # console.log(result)
         if result.successful
-          urls_list_block = fieldCache.siblings('.urls_list_block')
+          urls_list_block = uploadWrapper.find('.urls_list_block')
           data = {crop: {url: result.successful[0].uploadURL}}
           for style, style_opts of data
-            a = urls_list_block.find(".url_block.style-#{style} a")
+            a = urls_list_block.find(".urls_list .url_block.style-#{style} a")
             if a.length == 0
               span = "<span>#{style}: </span>"
               tag_a = "<a target='_blank'></a>"
-              urls_list_block.append("<div class='url_block style-#{style}'>#{span}#{tag_a}</div>")
+              urls_list_block.find(".urls_list").append("<div class='url_block style-#{style}'>#{span}#{tag_a}</div>")
               a = urls_list_block.find(".url_block.style-#{style} a")
             a.attr('href', style_opts.url).text(style_opts.id)
       
@@ -346,10 +349,19 @@ $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
   return false
 
 $(document).on "click", ".hancock_shrine_type .btn-remove-file", (e)->
-  checkbox = $(e.currentTarget).nextAll('.delete-checkbox')
-  console.log(checkbox)
+  link = $(e.currentTarget)
+  link.siblings('[type=checkbox]').click()
+  link.siblings('.toggle').toggle('slow')
+  link.toggleClass('btn-danger btn-info')
+  
+  checkbox = link.nextAll('.delete-checkbox')
+  uploadWrapper = link.closest('.hancock_shrine_type')
   if checkbox[0].checked
-    $('.hancock_shrine_type').addClass('delete-image-marker')
+    uploadWrapper.addClass('delete-image-marker')
   else
-    $('.hancock_shrine_type').removeClass('delete-image-marker')
+    uploadWrapper.removeClass('delete-image-marker')
+  window.hancock_cms.shrine.checkCropAvailable(uploadWrapper[0].querySelector('[type=file]'))
+  return false
+
+  # TODO remove now!
 

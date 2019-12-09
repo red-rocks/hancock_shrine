@@ -23,7 +23,7 @@
       - rails_admin_crop_options = nil
 
   - file = form.object.send(field.method_name).presence
-  - exist = (file and file.blank?)
+  - exist = (file and !file.blank? and file.exists?)
 
   - (cache_method = field.cache_method.clone).slice!("cached_")
   - cache = form.object.send(field.cache_method)
@@ -34,7 +34,9 @@
       - _add_class = 'crop_data_value'
     - else
       - _add_class = (field.pretty_value and !field.svg? ? "jcrop_data_value" : "")
-    .container.image-container
+
+    
+    .container.image-container.preview-container(class="#{"empty" unless exist}")
       .toggle{class="#{_add_class}" style=('display:none;' if file and field.delete_method and form.object.send(field.delete_method) == '1')}
         - value = image_tag(field.resource_url(field.thumb_method) || field.pretty_value || "", class: 'img-thumbnail')
         .preview
@@ -46,7 +48,7 @@
             span.file-upload-state
   - else
     -# TODO: filetype preview?
-    .container.image-container
+    .container.image-container.preview-container(class="#{"empty" unless exist}")
       .preview
         .image_block
           = image_tag ""
@@ -85,20 +87,32 @@
 
     - if field.optional? && field.errors.blank? && field.delete_method
       / a.btn.btn-info.btn-remove-image{href='#' data-toggle='button' role='button' onclick="$(this).siblings('[type=checkbox]').click(); $(this).siblings('.toggle').toggle('slow'); jQuery(this).toggleClass('btn-danger btn-info'); return false;"}
-      a.btn.btn-info.btn-remove-file{href='#' data-toggle='button' role='button' onclick="$(this).siblings('[type=checkbox]').click(); $(this).siblings('.toggle').toggle('slow'); jQuery(this).toggleClass('btn-danger btn-info'); return false;"}
+      / a.btn.btn-info.btn-remove-file{href='#' data-toggle='button' role='button' onclick="$(this).siblings('[type=checkbox]').click(); $(this).siblings('.toggle').toggle('slow'); jQuery(this).toggleClass('btn-danger btn-info'); return false;"}
+      
+      / - onclick = "$(this).siblings('[type=checkbox]').click(); $(this).siblings('.toggle').toggle('slow'); jQuery(this).toggleClass('btn-danger btn-info'); window.hancock_cms.shrine.checkCropAvailable(this.parentNode.querySelector('[type=file]')); return false;"
+      / a.btn.btn-info.btn-remove-file{href='#' data-toggle='button' role='button' onclick=onclick}
+      a.btn.btn-info.btn-remove-file{href='#' data-toggle='button' role='button'}
         i.icon-white.icon-trash
         = I18n.t('admin.actions.delete.menu').capitalize
 
       = form.check_box(field.delete_method, style: 'display:none;', class: "delete-checkbox")
 
     .urls_list_block
-      .urls_list
-        - styles = (form.object.try("#{field.name}_derivatives") || file)
+      .urls_list.hidden
+        / - styles = (form.object.try("#{field.name}_derivatives") || file)
+        ruby:
+          styles = {}
+          field.styles.each do |s|
+            styles[s] = form.object.try(field.name, s)
+          end
+          styles.compact!
         - if styles and styles.respond_to?(:each_pair)
           - styles.each_pair do |s_name, data|
-            .url_block.hidden(class="style-#{s_name}")
+            .url_block(class="style-#{s_name}")
               span= "#{s_name}: "
               = link_to asset_url(data.url), data.url, target: :_blank
-      = link_to 'Текущие ссылки', "#", class: "urls_toggler"
+      / = link_to 'Текущие ссылки', "#", class: "urls_toggler"
+      / = link_to 'Текущие ссылки', "#", class: "urls_toggler", onclick: "$(this).siblings('.urls_list').find('.url_block').toggleClass('hidden'); return false;"
+      = link_to 'Текущие ссылки', "#", class: "urls_toggler", onclick: "$(this).siblings('.urls_list').toggleClass('hidden'); return false;"
 
 .dropzone.hidden

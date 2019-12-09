@@ -28,6 +28,22 @@ class Shrine
           super(file: file, cache: cache, store: store)
         end
       end
+      
+
+      module AttachmentMethods
+        def define_entity_methods(name)
+          super if defined?(super)
+
+          define_method(:"#{name}") do |*args|
+            if args.first and args.first.try(:to_sym) == :original
+              args.shift
+            end
+            send(:"#{name}_attacher").get(*args)
+          end
+        end
+
+      end
+
 
 
       module FileMethods
