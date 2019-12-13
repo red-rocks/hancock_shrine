@@ -29,9 +29,10 @@ module RailsAdmin
                 method_name = params[:name].to_s
                 attacher_method_name = "#{method_name}_attacher"
                 attacher = @object.try(attacher_method_name)
-
+                
                 derivatives_method_name = "#{method_name}_derivatives"
                 update_derivatives_method_name = "#{derivatives_method_name}!"
+                
 
                 # puts '@object.send(method_name) before'
                 # puts @object.send(method_name).class
@@ -54,12 +55,15 @@ module RailsAdmin
                 # TODO: ??? maybe no need
                 # @object.send(update_derivatives_method_name) if @object.respond_to?(update_derivatives_method_name)
                 if @object.save!
+                  
+                
                   data = @object.try(derivatives_method_name) || @object.send(method_name) || {}
                   # puts '@object.send(method_name)'
                   # puts data.inspect
                   # puts data.class
                   # # puts data.url
                   # puts 'data.each_pair { |style, style_data|'
+                  
                   data.each { |style, style_data|
                     data[style] = if style_data.is_a?(Shrine::UploadedFile)
                     # style_data = if style_data.is_a?(Shrine::UploadedFile)
