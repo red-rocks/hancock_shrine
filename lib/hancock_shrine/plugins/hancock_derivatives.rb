@@ -183,22 +183,24 @@ class Shrine
           # puts 'def hancock_derivatives(original, record, name, context)'
           # puts [original, record, name, context, context.keys]
           derivatives = {}
-          pipeline = get_pipeline(original)
-          derivatives[:compressed] = pipeline.convert!(nil)
-          
-          ### TODO - more flexible
-          pipeline, original, context = cropping(pipeline, original, context) if respond_to?(:cropping)
-          
-          styles = get_styles(record, name, context)
-          styles.each_pair do |style_name, style_opts|
-            opts = {
-              pipeline: pipeline,
-              style_name: style_name,
-              style_opts: style_opts, 
-              io: original, 
-              context: context
-            }
-            derivatives[style_name] = process_style(opts)
+          if record.try("#{name}_is_image?")
+            pipeline = get_pipeline(original)
+            derivatives[:compressed] = pipeline.convert!(nil)
+            
+            ### TODO - more flexible
+            pipeline, original, context = cropping(pipeline, original, context) if respond_to?(:cropping)
+            
+            styles = get_styles(record, name, context)
+            styles.each_pair do |style_name, style_opts|
+              opts = {
+                pipeline: pipeline,
+                style_name: style_name,
+                style_opts: style_opts, 
+                io: original, 
+                context: context
+              }
+              derivatives[style_name] = process_style(opts)
+            end
           end
           # puts derivatives.inspect
           derivatives.compact
