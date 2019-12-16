@@ -34,7 +34,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "hancock_cms"
   spec.add_dependency "shrine", ">= 3.0"
-  spec.add_dependency "ack_rails_admin_jcrop"
+  # spec.add_dependency "ack_rails_admin_jcrop"
 
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "rake"

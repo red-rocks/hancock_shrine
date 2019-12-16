@@ -1,7 +1,7 @@
 require "hancock_cms"
 require "shrine"
 
-require "ack_rails_admin_jcrop"
+# require "ack_rails_admin_jcrop"
 
 require "hancock_shrine/version"
 

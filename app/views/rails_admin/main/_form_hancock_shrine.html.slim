@@ -7,10 +7,10 @@
 .controls-container
 
   - unless field.direct_upload
-    = stylesheet_link_tag 'rails_admin/jquery.Jcrop'
-    = stylesheet_link_tag 'rails_admin/ra.jcrop'
-    = javascript_include_tag 'rails_admin/jquery.Jcrop'
-    = javascript_include_tag 'rails_admin/ra.jcrop'
+    / = stylesheet_link_tag 'rails_admin/jquery.Jcrop'
+    / = stylesheet_link_tag 'rails_admin/ra.jcrop'
+    / = javascript_include_tag 'rails_admin/jquery.Jcrop'
+    / = javascript_include_tag 'rails_admin/ra.jcrop'
 
   - if field.crop_options.is_a?(Hash)
     - rails_admin_crop_options = field.crop_options.to_json
@@ -74,13 +74,13 @@
       attrs[:class] = 'no-uppy' unless field.direct_upload
     = form.file_field(field.name, field.html_attributes.reverse_merge(attrs))
 
-    - if field.image?
-      - unless field.direct_upload
-        - unless field.svg?
-          - model_name = form.object.class.to_param.gsub("::", "~").underscore
-          - url = jcrop_path(model_name: model_name, modal: true, id: form.object.id, field: field.name)
-          - link_data = {link: url, thumb: field.thumb_method || "original"}
-          = link_to 'Edit image', '#', data: link_data, style: 'display:none', class: "jcrop_handle"
+    / - if field.image?
+    /   - unless field.direct_upload
+    /     - unless field.svg?
+    /       - model_name = form.object.class.to_param.gsub("::", "~").underscore
+    /       - url = jcrop_path(model_name: model_name, modal: true, id: form.object.id, field: field.name)
+    /       - link_data = {link: url, thumb: field.thumb_method || "original"}
+    /       = link_to 'Edit image', '#', data: link_data, style: 'display:none', class: "jcrop_handle"
 
     - model_name = form.object.class.to_param.gsub("::", "~").underscore
 

@@ -133,7 +133,8 @@ window.hancock_cms.shrine.fileUpload = (fileInput) ->
 
 
 $(document).on 'rails_admin.dom_ready', ->
-  $('.hancock_shrine_type input[type=file]').filter(':not(.uppy, .no-uppy, .uppy-DragDrop-input, .uppy-FileInput-input)').each (i, fileInput) ->
+  # $('.hancock_shrine_type input[type=file]').filter(':not(.uppy, .no-uppy, .uppy-DragDrop-input, .uppy-FileInput-input)').each (i, fileInput) ->
+  $('.hancock_shrine_type input[type=file]').filter(':not(.uppy, .uppy-DragDrop-input, .uppy-FileInput-input)').each (i, fileInput) ->
     unless fileInput.uppy
       window.hancock_cms.shrine.fileUpload fileInput
 

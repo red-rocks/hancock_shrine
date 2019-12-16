@@ -15,7 +15,7 @@ Shrine.plugin :restore_cached_data # re-extract metadata when attaching a cached
 Shrine.plugin :backgrounding
 
 
-Shrine.plugin :versions
+# Shrine.plugin :versions
 Shrine.plugin :default_version
 Shrine.plugin :hancock_location
 Shrine.plugin :timestampable
