@@ -70,7 +70,7 @@ module RailsAdmin
 
           register_instance_option :crop_options do
             "#{name}_crop_options".to_sym
-          end          
+          end
 
           register_instance_option :direct_upload do
             begin
@@ -82,8 +82,10 @@ module RailsAdmin
                   path_method = uploader_class.endpoint_name rescue nil
                   _params = bindings[:controller]&.params || {}
                   attrs = {
-                    model_name: _params[:model_name] || model.rails_admin_model,
-                    id: _params[:id] || (bindings[:object]&.persisted? ? bindings[:object].id : nil),
+                    # model_name: _params[:model_name] || model.rails_admin_model,
+                    model_name: model.rails_admin_model,
+                    # id: _params[:id] || (bindings[:object]&.persisted? ? bindings[:object].id : nil),
+                    id: ((bindings[:object]&.persisted? or bindings[:object]&.embedded?) ? bindings[:object].id : nil),
                     field_name: name
                   }.compact
                   url = (path_method and context&.main_app&.try("upload_#{path_method}_path", attrs))
@@ -137,8 +139,11 @@ module RailsAdmin
           def resource_url(thumb = false)
             # return nil unless (attachment = bindings[:object].send(name)).present?
             # thumb.present? ? (attachment[thumb] || attachment).url : attachment.url
-
-            thumb.present? ? bindings[:object].send(name, thumb)&.url : bindings[:object].send(name)&.url
+            
+            _url = if thumb.present?
+              bindings[:object].send(name, thumb)&.url
+            end 
+            (_url || bindings[:object].send(name)&.url)
           end
 
         end

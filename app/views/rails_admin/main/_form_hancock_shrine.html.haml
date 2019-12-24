@@ -41,7 +41,7 @@
 - else
   -# TODO: filetype preview?
 
-
+ 
 = form.file_field(field.name, field.html_attributes.reverse_merge({data: { image_file: true, fileupload: true, rails_admin_crop_options: rails_admin_crop_options }}))
 
 - model_name = form.object.class.to_param.gsub("::", "~").underscore

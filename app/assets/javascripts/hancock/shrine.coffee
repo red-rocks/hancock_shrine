@@ -61,7 +61,8 @@ window.hancock_cms.shrine.fileUpload = (fileInput) ->
   ).use(Uppy.ProgressBar, target: (imagePreview || fileInput).parentNode
   )#.use(Uppy.ThumbnailGenerator, thumbnailWidth: 400) # TEMP
   
-  metaFields = ['name']
+  # metaFields = ['name']
+  metaFields = []
   if imagePreview
     metaFields.push 'crop_x'
     metaFields.push 'crop_y'
@@ -77,6 +78,7 @@ window.hancock_cms.shrine.fileUpload = (fileInput) ->
   uppy.use Uppy.XHRUpload,
     endpoint: endpoint
     formData: true
+    bundle: false
     metaFields: metaFields
     withCredentials: true
     responseUrlFieldName: 'url'
@@ -105,13 +107,20 @@ window.hancock_cms.shrine.fileUpload = (fileInput) ->
   uppy.on 'file-added', (file) ->
     # console.log 'Added file', file
     # # uppy.setMeta({cached_metadata: null}))
+    delete fileInput.dataset.cropUrl
     if imagePreview
-      uppy.setMeta
+      uppy.setFileMeta(file.id, { 
         crop_x: null
         crop_y: null
         crop_w: null
         crop_h: null
-    window.hancock_cms.shrine.checkCropAvailable fileInput    
+      }) 
+      # uppy.setMeta
+      #   crop_x: null
+      #   crop_y: null
+      #   crop_w: null
+      #   crop_h: null
+    window.hancock_cms.shrine.checkCropAvailable fileInput
     $(fileInput).closest('.hancock_shrine_type').trigger('dragleave')
     
   if imagePreview
@@ -223,21 +232,23 @@ $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
     actualImageUrl = "/#{prefix}#{storage_path}/#{cached.id}"
   else
     actualImageUrl = field.data('original')
+  # TODO
+  fieldName = 'image'
+
 
   csrf_param = document.querySelector('meta[name=csrf-param]').content
   csrf_token = document.querySelector('meta[name=csrf-token]').content
 
   cropper_image = "<img id='cropper-image' style='width: 100%;' src='#{actualImageUrl}'>"
   cropper_image_wrapper = "<div style='max-width: 100%;'>#{cropper_image}</div>"
-  action = field.closest("form").attr("action").split("?")[0]
-  if action.endsWith("/edit")
-    form_action = action.replace(/\/edit$/i, "/hancock_shrine_crop")
+  action = field.data('crop-url')
+  if action
     cropper_form = [
-      "<form action='#{form_action}' data-remote='true' id='cropper-form' accept-charset='UTF-8' method='post'>",
+      "<form action='#{action}' data-remote='true' id='cropper-form' accept-charset='UTF-8' method='post'>",
       "<input type='hidden' name='#{csrf_param}' value='#{csrf_token}'>",
 
-      "<input type='hidden' name='name' value='image'>",
-      "<input type='hidden' name='image' value='#{JSON.stringify(cached) || ""}'>"
+      "<input type='hidden' name='name' value='#{fieldName}'>",
+      "<input type='hidden' name='#{fieldName}' value='#{JSON.stringify(cached) || ""}'>"
 
       "<input type='hidden' name='crop_x' value=''>",
       "<input type='hidden' name='crop_y' value=''>",
@@ -245,6 +256,23 @@ $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
       "<input type='hidden' name='crop_h' value=''>",
       "</form>"
     ].join("")
+    
+  # action = field.closest("form").attr("action").split("?")[0]
+  # if action.endsWith("/edit")
+  #   form_action = action.replace(/\/edit$/i, "/hancock_shrine_crop")
+  #   cropper_form = [
+  #     "<form action='#{form_action}' data-remote='true' id='cropper-form' accept-charset='UTF-8' method='post'>",
+  #     "<input type='hidden' name='#{csrf_param}' value='#{csrf_token}'>",
+
+  #     "<input type='hidden' name='name' value='image'>",
+  #     "<input type='hidden' name='image' value='#{JSON.stringify(cached) || ""}'>"
+
+  #     "<input type='hidden' name='crop_x' value=''>",
+  #     "<input type='hidden' name='crop_y' value=''>",
+  #     "<input type='hidden' name='crop_w' value=''>",
+  #     "<input type='hidden' name='crop_h' value=''>",
+  #     "</form>"
+  #   ].join("")
 
   # WTF
   setTimeout ->
@@ -291,20 +319,22 @@ $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
           alert(error)
         else
           data = xhr.responseJSON
-          fieldCache.val('')
-          field.data('original', data.original.url)
-          
-          thumb = (data.thumb || data.thumbnail || data.main || data.original)
-          imagePreview.attr('src', thumb.url)
+          if data
+            fieldCache.val('')
+            field.data('original', data.original.url)
+            
+            # TODO
+            thumb = (data.thumb || data.thumbnail || data.main || data.crop || data.original)
+            imagePreview.attr('src', thumb.url)
 
-          urls_list_block = uploadWrapper.find('.urls_list_block')
-          for style, style_opts of data
-            a = urls_list_block.find(".urls_list .url_block.style-#{style} a")
-            unless a.length
-              div = $("<div class='url_block style-#{style}'></div>").appendTo(urls_list_block.find('.urls_list')) 
-              div.html("<span>#{style}:</span>")
-              a = $('<a></a>').appendTo(div) 
-            a.attr('href', style_opts.url).text(style_opts.id).attr("target", "_blank")
+            urls_list_block = uploadWrapper.find('.urls_list_block')
+            for style, style_opts of data
+              a = urls_list_block.find(".urls_list .url_block.style-#{style} a")
+              unless a.length
+                div = $("<div class='url_block style-#{style}'></div>").appendTo(urls_list_block.find('.urls_list')) 
+                div.html("<span>#{style}:</span>")
+                a = $('<a></a>').appendTo(div) 
+              a.attr('href', style_opts.url).text(style_opts.id).attr("target", "_blank")
         dialog.modal('hide')
       ########
       $cropper_form.find('[name="crop_x"]').val(cropData.crop_x)
@@ -316,10 +346,13 @@ $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
 
     else # if "/new" action
       uppy = field[0].uppy
-      uppy.setMeta(cropData)
+      # uppy.setMeta(cropData)
 
       files = uppy.getFiles()
-      uppy.retryUpload(files[files.length-1].id).then (result) -> 
+      fileId = files[files.length-1].id      
+
+      uppy.setFileMeta(fileId, cropData) 
+      uppy.retryUpload(fileId).then (result) -> 
         # console.info('Successful uploads:', result.successful)
 
         if (result.failed.length > 0) 

@@ -4,6 +4,7 @@
 = stylesheet_link_tag "hancock/shrine.css", media: :all
 = javascript_include_tag "hancock/shrine.js"
 
+
 .controls-container
 
   - unless field.direct_upload
@@ -61,6 +62,7 @@
     / .dropzone
 
     ruby:
+      base_model = form.object.class.rails_admin_model
       attrs = {
         data: {
           direct_upload: field.direct_upload,
@@ -68,7 +70,8 @@
           fileupload: true,
           rails_admin_crop_options: rails_admin_crop_options,
           rails_admin_jcrop_options: rails_admin_crop_options,
-          original: field.resource_url
+          original: field.resource_url,
+          crop_url: form.object.new_record? ? field.direct_upload : "/#{base_model}/#{form.object.id}/hancock_shrine_crop"
         }.compact
       }
       attrs[:class] = 'no-uppy' unless field.direct_upload

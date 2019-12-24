@@ -24,7 +24,8 @@ module RailsAdmin
           proc do
             if params['id'].present?
               begin
-                @object = @abstract_model.model.unscoped.find(params['id'])
+                # TODO
+                @object = @abstract_model.model.unscoped.find(params['id']) rescue @abstract_model.model.find(params['id'])
                 
                 method_name = params[:name].to_s
                 attacher_method_name = "#{method_name}_attacher"
