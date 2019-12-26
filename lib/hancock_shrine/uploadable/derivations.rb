@@ -12,9 +12,10 @@ module HancockShrine::Uploadable::Deriviations
 
   class_methods do
 
-    def derivation_endpoint_prefix
-      # "upload/derivations/#{hancock_model.name.underscore}/#{hancock_field_name}"
-      "upload/derivations"
+    def derivation_endpoint_prefix(namespace = "upload")
+      # "#{namespace}/derivations/#{hancock_model.name.underscore}/#{hancock_field_name}"
+      # "#{namespace}/derivations"
+      [namespace, "derivations"].reject(&:blank?).join("/")
     end
 
   end

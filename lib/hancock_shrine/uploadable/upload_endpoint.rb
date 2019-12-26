@@ -27,7 +27,7 @@ module HancockShrine::Uploadable::UploadEndpoint
       params = request.params.with_indifferent_access
       context = {}
       model_name = params[:model_name]
-      hancock_model = model_name.gsub("~", "::").camelize.constantize rescue nil
+      hancock_model = model_name.split('~').collect(&:camelize).join('::').constantize rescue nil
       if hancock_model
         id = params[:id]
         unless id.blank?
@@ -44,7 +44,8 @@ module HancockShrine::Uploadable::UploadEndpoint
       elsif params["files"].is_a?(Array)
         params["files"].first
       end
-      if value and (context[:record] || context[:model]).try("#{params[:field_name]}_is_image?")
+
+      if value and (context[:record] || context[:model])&.try("#{params[:field_name]}_is_image?")
         context[:metadata].merge!({"crop" => {}})
         crop_param_names = [:crop_x, :crop_y, :crop_w, :crop_h]
         if crop_param_names.all? { |param| params[param].present? and !params[param].blank? and params[param] != "null"  }
@@ -54,8 +55,7 @@ module HancockShrine::Uploadable::UploadEndpoint
             })
           end
         end
-      end
-      
+      end      
       context
     end
     def upload_context_url(object, request)
