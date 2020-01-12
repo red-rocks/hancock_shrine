@@ -68,6 +68,7 @@ class Shrine
 
       module AttacherMethods
 
+        private
         # include ::HancockShrine::Uploadable::Content    
         def vips?
           HancockShrine.config.vips
@@ -75,7 +76,6 @@ class Shrine
         def imagick?
           !vips?
         end
-
 
         def get_data_from(io, context)
           if io.is_a?(Hash)
@@ -115,7 +115,8 @@ class Shrine
             record.send(styles_method)
           end
         end
-
+        
+        public
         def resize_opts_default
           {sharpen: false, size: :down}
         end

@@ -15,6 +15,7 @@ class Shrine
       end
 
       module InstanceMethods
+        private
         def generate_location(io, context)
           hancock_location(io, context)
         end
@@ -77,7 +78,7 @@ class Shrine
           ].reject(&:blank?).join("/") # PAPERCLIP fallback
         end
 
-        private
+        # private
 
         def class_location(klass)
           # parts = klass.name.downcase.split("::")
@@ -88,6 +89,8 @@ class Shrine
             parts.last
           end.pluralize # PAPERCLIP fallback
         end
+
+        
       end
     end
 

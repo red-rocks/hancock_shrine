@@ -28,6 +28,7 @@ class Shrine
 
       module InstanceMethods
 
+        private
         def extract_metadata(io, **options)
           metadata = super
           _metadata = (io && io.data && (io.data["metadata"] || io.data[:metadata])) rescue {}
@@ -57,6 +58,7 @@ class Shrine
           end
         end
 
+        public
         def cropping(pipeline, io, context)
           _crop_params = crop_params(context[:record])
           if _crop_params.blank?
@@ -88,6 +90,7 @@ class Shrine
       # TODO: DERIVATIVES
       module AttacherMethods
 
+        private
         def crop_params(target = nil)
 
           return nil if target.nil?
@@ -110,6 +113,7 @@ class Shrine
           end
         end
 
+        public
         def cropping(pipeline, io, context)
           metadata = if io and io.respond_to?(:metadata) and io.metadata
             io.metadata.merge(context[:metadata] || {})
@@ -149,6 +153,7 @@ class Shrine
 
       module AttacherClassMethods
         
+        private
         def dump(attacher)
           super.merge(
             {

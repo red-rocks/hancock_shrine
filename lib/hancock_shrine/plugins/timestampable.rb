@@ -35,11 +35,11 @@ class Shrine
       # end
       module FileMethods
         
-        def url(*options)
-          _options = options.extract_options!
+        def url(*options, **hash_options)
+          _options = options.extract_options!.merge(hash_options)
           _options.reverse_merge!(timestamp: true)
           timestamp = _options.delete(:timestamp) ? metadata["timestamp"] : nil
-          _url = super(*options)
+          _url = super(**_options)
           if timestamp
             _url = if _url.index("?")
               "#{_url}&#{timestamp.to_i}"
