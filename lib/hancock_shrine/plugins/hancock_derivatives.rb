@@ -77,6 +77,42 @@ class Shrine
           define_method :"remove_#{name}" do
             send(:"#{name}_attacher").delete_derivatives
           end
+
+          define_method :"reprocess_#{name}!" do
+            _attacher = send(:"#{name}_attacher")
+            if _attacher and _attacher.respond_to?(:derivatives)
+              # _attacher.remove_derivatives
+              return (send(:"#{name}_derivatives!") and self.save!)
+            end
+            file = send(name)
+            file =  file[:original] if file.is_a?(Hash)
+            if _attacher.stored?
+              self.update!("#{name}": file)
+            else
+              if _attacher.cached?
+                _attacher.store!(name)
+                self.save
+              end
+            end
+          end
+          define_method :"reprocess_#{name}" do
+            _attacher = send(:"#{name}_attacher")
+            if _attacher and _attacher.respond_to?(:derivatives)
+              # _attacher.remove_derivatives
+              return send(:"#{name}_derivatives!")
+            end
+            file = send(name)
+            file =  file[:original] if file.is_a?(Hash)
+            if _attacher.stored?
+              self.assign_attributes("#{name}": file)
+            else
+              if _attacher.cached?
+                _attacher.store!(name)
+              end
+            end
+          end
+          
+
         end
       end
 

@@ -43,20 +43,26 @@ module RailsAdmin
                   [:crop_x, :crop_y, :crop_w, :crop_h].each do |meth|
                     @object.send("#{meth}=", params[meth])
                   end
-                  if params[method_name].blank?
+                  processed = if params[method_name].blank?
                     @object.send("reprocess_#{method_name}")
                   else
                     # puts params[method_name].inspect
                     # puts JSON.parse(params[method_name]).inspect
                     # @object.send("#{method_name}=", JSON.parse(params[method_name]))
                     @object.send("#{method_name}=", params[method_name])
+                    @object.try(update_derivatives_method_name)
                   end
                 end
-                
+
                 # TODO: ??? maybe no need
                 # @object.send(update_derivatives_method_name) if @object.respond_to?(update_derivatives_method_name)
-                if @object.save!
-                  
+                # if @object.save!
+                # if @object.try(update_derivatives_method_name) or @object.save!
+                # puts "res = @object.try(update_derivatives_method_name)"
+                # puts res = @object.try(update_derivatives_method_name)
+                # puts res2 = res or @object.save!
+                # if res2
+                if processed and @object.save!
                 
                   data = @object.try(derivatives_method_name) || @object.send(method_name) || {}
                   # puts '@object.send(method_name)'
@@ -68,13 +74,13 @@ module RailsAdmin
                   data.each { |style, style_data|
                     data[style] = if style_data.is_a?(Shrine::UploadedFile)
                     # style_data = if style_data.is_a?(Shrine::UploadedFile)
-                      style_data.data.merge({url: style_data.url})
+                      style_data.data.merge({url: ActionController::Base.helpers.asset_url(style_data.url)})
                     else
-                      style_data.data.merge({url: data.url(style)})
+                      style_data.data.merge({url: ActionController::Base.helpers.asset_url(data.url(style))})
                     end
                   }
                   # derivatives fix
-                  data[:original] ||= @object.send(method_name).as_json.merge({url: @object.send(method_name).url})
+                  data[:original] ||= @object.send(method_name).as_json.merge({url: ActionController::Base.helpers.asset_url(@object.send(method_name).url)})
                   # puts data.inspect
                   render json: data
                 else

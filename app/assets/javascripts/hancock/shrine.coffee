@@ -90,6 +90,7 @@ window.hancock_cms.shrine.fileUpload = (fileInput) ->
     # set hidden field value to the uploaded file data so that it's submitted with the form as the attachment
     hiddenInput = uploadWrapper.querySelector('.cache')
     hiddenInput.value = uploadedFileData
+    # console.log(response.body)
     imagePreview.src = response.body.url if imagePreview
     
     if response.body.url
@@ -171,7 +172,7 @@ window.hancock_cms.shrine.getModal = ()->
     </div>')
     .modal({
       keyboard: true
-      backdrop: true
+      backdrop: false
       show: true
     })
     .on('hidden.bs.modal', ->
