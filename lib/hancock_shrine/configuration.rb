@@ -38,9 +38,12 @@ module HancockShrine
 
       @plugins.delete 'moving' # shrine 3.0
 
+      @plugins.delete 'remove_attachment' # shrine 3.0
       @plugins.delete 'processing' # shrine 3.0
       @plugins.delete 'versions' # shrine 3.0
-      @plugins[@plugins.index('hancock_versions')] = 'hancock_derivatives' rescue @plugins << 'processing' # shrine 4.0
+      @plugins[@plugins.index('hancock_versions')] = 'hancock_derivatives' rescue @plugins << 'processing' << 'remove_attachment' # shrine 4.0
+      # @plugins << "changing_derivatives"
+
       @plugins.compact!
 
       @plugin_options = {

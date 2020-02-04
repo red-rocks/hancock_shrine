@@ -36,7 +36,6 @@
     - else
       - _add_class = (field.pretty_value and !field.svg? ? "jcrop_data_value" : "")
 
-    
     .container.image-container.preview-container(class="#{"empty" unless exist}")
       .toggle{class="#{_add_class}" style=('display:none;' if file and field.delete_method and form.object.send(field.delete_method) == '1')}
         - value = image_tag(field.resource_url(field.thumb_method) || field.pretty_value || "", class: 'img-thumbnail')
@@ -70,7 +69,7 @@
           fileupload: true,
           rails_admin_crop_options: rails_admin_crop_options,
           rails_admin_jcrop_options: rails_admin_crop_options,
-          original: field.resource_url,
+          original: field.resource_url ? asset_url(field.resource_url) : nil,
           crop_url: form.object.new_record? ? field.direct_upload : "/#{base_model}/#{form.object.id}/hancock_shrine_crop"
         }.compact
       }

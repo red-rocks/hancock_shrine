@@ -66,9 +66,39 @@ class Shrine
       # module InstanceMethods
       # end
 
+      module AttachmentMethods
+        def define_model_methods(name)
+          super if defined?(super)
+
+          define_method :"remove_#{name}=" do |value|
+            send(:"#{name}_attacher").remove = value
+          end
+
+          define_method :"remove_#{name}" do
+            send(:"#{name}_attacher").delete_derivatives
+          end
+        end
+      end
+
+
       module AttacherMethods
 
+        def remove=(value)
+          @remove = value
+
+          change(nil) if remove?
+        end
+
+        def remove
+          @remove
+        end
+
         private
+        def remove?
+          remove && remove != "" && remove !~ /\A(0|false)\z/
+        end
+
+        
         # include ::HancockShrine::Uploadable::Content    
         def vips?
           HancockShrine.config.vips

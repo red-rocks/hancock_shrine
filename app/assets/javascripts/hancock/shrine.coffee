@@ -233,7 +233,10 @@ $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
   else
     actualImageUrl = field.data('original')
   # TODO
-  fieldName = 'image'
+  direct_upload_url = (field.data('direct-upload') || {}).url
+  if direct_upload_url
+    fieldName = direct_upload_url.match(new RegExp(/field_name=([^&]+)/))[1]
+  fieldName ||= 'image'
 
 
   csrf_param = document.querySelector('meta[name=csrf-param]').content

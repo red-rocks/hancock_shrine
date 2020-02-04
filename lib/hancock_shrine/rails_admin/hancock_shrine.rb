@@ -120,7 +120,9 @@ module RailsAdmin
               :original
             else
               if bindings and bindings[:object] and bindings[:object].send(name)
-                @thumb_method ||= (styles.find{|k| k.in?([:thumb, :thumbnail, 'thumb', 'thumbnail'])} || styles.first.to_s)
+                @thumb_method ||= (styles.detect{ |s| 
+                  s.in?([:thumb, :thumbnail, 'thumb', 'thumbnail'])
+                } || styles.first.to_s)
               else
                 :original
               end
