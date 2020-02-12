@@ -71,17 +71,14 @@ class Shrine
           super if defined?(super)
 
           define_method :"remove_#{name}=" do |value|
-            puts 'define_method :"remove_#{name}=" do |value|'
             send(:"#{name}_attacher").remove = value
           end
 
           define_method :"remove_#{name}" do
-            puts 'define_method :"remove_#{name}" do'
             # send(:"#{name}_attacher").delete_derivatives
           end
 
           define_method :"remove_#{name}!" do
-            puts 'define_method :"remove_#{name}!" do'
             send(:"#{name}_attacher").delete_derivatives
           end
 
@@ -256,9 +253,6 @@ class Shrine
 
 
         def hancock_derivatives(original, record, name, context, opts = {})
-          puts 'def hancock_derivatives(original, record, name, context, opts = {})'
-          # puts 'def hancock_derivatives(original, record, name, context)'
-          # puts [original, record, name, context, context.keys]
           derivatives = {}
           if record.try("#{name}_is_image?")
             pipeline = get_pipeline(original)
@@ -274,9 +268,6 @@ class Shrine
                 crop[:crop_w].to_i, 
                 crop[:crop_h].to_i
               ]
-              puts opts.inspect
-              puts crop.inspect
-              puts crop_array.inspect
               pipeline = pipeline.crop(*crop_array)
               context[:metadata][:crop] = crop if context[:metadata]
             end

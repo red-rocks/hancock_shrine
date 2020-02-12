@@ -137,12 +137,6 @@ module RailsAdmin
           end
 
           register_instance_option :pretty_value do
-            puts "pretty_value"
-            puts name
-            puts value.presence
-            puts image
-            puts value
-            puts 
             if value.presence
               v = bindings[:view]
               url = resource_url
