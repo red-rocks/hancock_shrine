@@ -14,14 +14,17 @@ class Shrine
       def self.load_dependencies(uploader, *)
         uploader.plugin :add_metadata
         uploader.add_metadata :crop do |io, context|
-          # puts 'uploader.add_metadata :crop do |io, context|'
-          # # puts context.inspect
-          # puts context.keys.join(" _ ")
-          # # puts context.inspect
-          # puts context['metadata']
-          # puts context[:metadata]
-          # puts 
-          ((context and context[:metadata] and (context[:metadata][:crop] || context[:metadata]['crop'])) ||  {})
+          
+          _crop = ((context and context[:metadata] and (context[:metadata][:crop] || context[:metadata]['crop'])) ||  {})
+          if _crop.blank? and context and context[:record]
+            _crop = {
+              crop_w: context[:record].try(:crop_w),
+              crop_h: context[:record].try(:crop_h),
+              crop_x: context[:record].try(:crop_x),
+              crop_y: context[:record].try(:crop_y)
+            }
+          end
+          _crop
         end
       end
 

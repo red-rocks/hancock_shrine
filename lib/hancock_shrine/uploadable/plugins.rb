@@ -27,9 +27,21 @@ module HancockShrine::Uploadable::Plugins
     def init_plugins(base)
       HancockShrine.config.plugins.each do |plugin_name|
         plugin_name = plugin_name.to_sym
+        plugin_options = HancockShrine.config.plugin_options[plugin_name] || {}
+
+        if_condition = plugin_options.delete(:if)
+        if if_condition 
+          next if if_condition == :is_image and !@is_image
+        end
+
+        unless_condition = plugin_options.delete(:unless)
+        if unless_condition 
+          next if unless_condition == :is_image and @is_image
+        end
+
         begin
           # puts "#{plugin_name} with_options"
-          plugin plugin_name, HancockShrine.config.plugin_options[plugin_name] || {}
+          plugin plugin_name, plugin_options
         rescue Exception => ex
           # puts ex.inspect
     
@@ -129,7 +141,8 @@ module HancockShrine::Uploadable::Plugins
         elsif plugin_name == :hancock_derivatives
           class_eval <<-RUBY
             # Attacher.derivatives :hancock_processor do |original|
-            Attacher.derivatives_processor do |original|
+            Attacher.derivatives_processor do |original, crop: nil|
+              puts 'Attacher.derivatives_processor do |original, crop: nil|'
               # self    #=> #<Shrine::Attacher>
             
               # # record  #=> #<Photo>
@@ -144,8 +157,9 @@ module HancockShrine::Uploadable::Plugins
               # puts name
               # puts 'context'
               # puts context
+              opts = { crop: crop }
 
-              self.hancock_derivatives(original, record, name, context)
+              self.hancock_derivatives(original, record, name, context, opts)
             end
           RUBY
         end

@@ -34,12 +34,18 @@ module RailsAdmin
                 derivatives_method_name = "#{method_name}_derivatives"
                 update_derivatives_method_name = "#{derivatives_method_name}!"
                 
+                if @object&.respond_to?(update_derivatives_method_name)
+                  opts = {
+                    crop: {
+                      crop_x: params[:crop_x],
+                      crop_y: params[:crop_y],
+                      crop_w: params[:crop_w],
+                      crop_h: params[:crop_h]
+                    }
+                  }
+                  processed = object.try(update_derivatives_method_name, opts)
 
-                # puts '@object.send(method_name) before'
-                # puts @object.send(method_name).class
-                # puts @object.send(method_name).inspect
-                
-                if @object and attacher.class.module_parent < Shrine
+                elsif @object and attacher.class.module_parent < Shrine
                   [:crop_x, :crop_y, :crop_w, :crop_h].each do |meth|
                     @object.send("#{meth}=", params[meth])
                   end
@@ -54,6 +60,7 @@ module RailsAdmin
                   end
                 end
 
+
                 # TODO: ??? maybe no need
                 # @object.send(update_derivatives_method_name) if @object.respond_to?(update_derivatives_method_name)
                 # if @object.save!
@@ -64,12 +71,7 @@ module RailsAdmin
                 # if res2
                 if processed and @object.save!
                 
-                  data = @object.try(derivatives_method_name) || @object.send(method_name) || {}
-                  # puts '@object.send(method_name)'
-                  # puts data.inspect
-                  # puts data.class
-                  # # puts data.url
-                  # puts 'data.each_pair { |style, style_data|'
+                  data = @object.try(derivatives_method_name) || @object.try(method_name) || {}
                   
                   data.each { |style, style_data|
                     data[style] = if style_data.is_a?(Shrine::UploadedFile)

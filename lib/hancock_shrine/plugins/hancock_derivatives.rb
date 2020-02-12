@@ -7,7 +7,7 @@ class Shrine
     module HancockDerivatives
 
       def self.load_dependencies(uploader, *)
-        uploader.plugin :derivatives
+        uploader.plugin :derivatives, create_on_promote: true
         # uploader.plugin :default_version, name: :original
       end
 
@@ -71,10 +71,17 @@ class Shrine
           super if defined?(super)
 
           define_method :"remove_#{name}=" do |value|
+            puts 'define_method :"remove_#{name}=" do |value|'
             send(:"#{name}_attacher").remove = value
           end
 
           define_method :"remove_#{name}" do
+            puts 'define_method :"remove_#{name}" do'
+            # send(:"#{name}_attacher").delete_derivatives
+          end
+
+          define_method :"remove_#{name}!" do
+            puts 'define_method :"remove_#{name}!" do'
             send(:"#{name}_attacher").delete_derivatives
           end
 
@@ -118,6 +125,15 @@ class Shrine
 
 
       module AttacherMethods
+        attr_reader :derivatives_processed
+
+        def create_derivatives(*args, storage: nil, **options)
+          @derivatives_processed = false
+          if ret = super
+            @derivatives_processed = true
+          end
+          return ret
+        end
 
         def remove=(value)
           @remove = value
@@ -188,14 +204,7 @@ class Shrine
         end
 
         def process_style(pipeline:, style_name:, style_opts:, io:, context:)
-          # puts 'def process_style(pipeline:, style_name:, style_opts:, io:, context:)'
-          # puts style_name
-          # puts 'context'
-          # puts context.class
-          # puts context.keys
-          # puts context[:metadata]
-          # puts context.inspect
-
+          
           opts = {pipeline: pipeline, style_name: style_name, style_opts: style_opts, io: io, context: context}
           pipeline = pre_process_style(opts)
     
@@ -246,7 +255,8 @@ class Shrine
 
 
 
-        def hancock_derivatives(original, record, name, context)
+        def hancock_derivatives(original, record, name, context, opts = {})
+          puts 'def hancock_derivatives(original, record, name, context, opts = {})'
           # puts 'def hancock_derivatives(original, record, name, context)'
           # puts [original, record, name, context, context.keys]
           derivatives = {}
@@ -254,20 +264,34 @@ class Shrine
             pipeline = get_pipeline(original)
             derivatives[:compressed] = pipeline.convert!(nil)
             
-            ### TODO - more flexible
-            pipeline, original, context = cropping(pipeline, original, context) if respond_to?(:cropping)
-            
-            styles = get_styles(record, name, context)
-            styles.each_pair do |style_name, style_opts|
-              opts = {
-                pipeline: pipeline,
-                style_name: style_name,
-                style_opts: style_opts, 
-                io: original, 
-                context: context
-              }
-              derivatives[style_name] = process_style(opts)
+            # ### TODO - more flexible
+            # pipeline, original, context = cropping(pipeline, original, context) if respond_to?(:cropping)
+            if crop = (opts[:crop] || (context[:metadata] and context[:metadata][:crop]))
+              crop = crop.with_indifferent_access
+              crop_array = [
+                crop[:crop_x].to_i, 
+                crop[:crop_y].to_i, 
+                crop[:crop_w].to_i, 
+                crop[:crop_h].to_i
+              ]
+              puts opts.inspect
+              puts crop.inspect
+              puts crop_array.inspect
+              pipeline = pipeline.crop(*crop_array)
+              context[:metadata][:crop] = crop if context[:metadata]
             end
+          end
+            
+          styles = get_styles(record, name, context)
+          styles.each_pair do |style_name, style_opts|
+            opts = {
+              pipeline: pipeline,
+              style_name: style_name,
+              style_opts: style_opts, 
+              io: original, 
+              context: context
+            }
+            derivatives[style_name] = process_style(opts)
           end
           # puts derivatives.inspect
           derivatives.compact

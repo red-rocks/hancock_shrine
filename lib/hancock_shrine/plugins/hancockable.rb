@@ -7,6 +7,7 @@ class Shrine
     #
     module Hancockable
       def self.configure(uploader, opts = {})
+        uploader.plugin :type_predicates
       end
 
       module ClassMethods
@@ -87,13 +88,13 @@ class Shrine
         end
         
 
-        def svg?
-          !!(content_type =~ /svg/)
-        end
+        # def svg?
+        #   !!(content_type =~ /svg/)
+        # end
 
-        def image?
-          svg? or content_type.start_with?("image/")
-        end
+        # def image?
+        #   svg? or content_type.start_with?("image/")
+        # end
 
         def inline_svg
           inline_data if svg?

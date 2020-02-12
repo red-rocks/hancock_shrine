@@ -126,14 +126,13 @@ window.hancock_cms.shrine.fileUpload = (fileInput) ->
     
   if imagePreview
     uppy.on 'thumbnail:generated', (file, preview) ->
-      # console.log 'thumbnail:generated'
-      # # imagePreview.src = imagePreview.src or preview
+      $(fileInput).data('original', preview)
+      # imagePreview.src = imagePreview.src or preview
       
     uppy.on 'upload', (data) ->
-      # console.log('upload')
-      # console.log(data)
       imagePreview.removeAttribute 'src'
       window.hancock_cms.shrine.checkCropAvailable fileInput
+      # field.data('original')
 
     
   fileInput.classList.add 'uppy'
@@ -328,10 +327,12 @@ $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
             field.data('original', data.original.url)
             
             # TODO
-            thumb = (data.thumb || data.thumbnail || data.main || data.crop || data.original)
+            # console.log field.data('rails-admin-crop-options')
+            thumb = (data[field.data('rails-admin-crop-options').crop_style] || data.thumb || data.thumbnail || data.main || data.crop || data.original)
             imagePreview.attr('src', thumb.url)
 
             urls_list_block = uploadWrapper.find('.urls_list_block')
+            urls_list_block.find('url_block').addClass('hidden')
             for style, style_opts of data
               a = urls_list_block.find(".urls_list .url_block.style-#{style} a")
               unless a.length
@@ -339,6 +340,7 @@ $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
                 div.html("<span>#{style}:</span>")
                 a = $('<a></a>').appendTo(div) 
               a.attr('href', style_opts.url).text(style_opts.id).attr("target", "_blank")
+              a.closest(".url_block.hidden").removeClass("hidden")
         dialog.modal('hide')
       ########
       $cropper_form.find('[name="crop_x"]').val(cropData.crop_x)
@@ -353,7 +355,7 @@ $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
       # uppy.setMeta(cropData)
 
       files = uppy.getFiles()
-      fileId = files[files.length-1].id      
+      fileId = files[files.length-1].id
 
       uppy.setFileMeta(fileId, cropData) 
       uppy.retryUpload(fileId).then (result) -> 
@@ -364,10 +366,17 @@ $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
           result.failed.forEach (file) -> 
             # console.error(file.error)
 
-        # console.log('result')
-        # console.log(result)
+            
+
         if result.successful
+
+          alert(1)
+
+          # thumb = (field.data('rails-admin-crop-options').crop_style || data.thumb || data.thumbnail || data.main || data.crop || data.original)
+          # imagePreview.attr('src', thumb.url)
+
           urls_list_block = uploadWrapper.find('.urls_list_block')
+          urls_list_block.find('url_block').addClass('hidden')
           data = {crop: {url: result.successful[0].uploadURL}}
           for style, style_opts of data
             a = urls_list_block.find(".urls_list .url_block.style-#{style} a")
@@ -377,6 +386,7 @@ $(document).on "click", ".hancock_shrine_type.no-jcrop .crop-btn", (e)->
               urls_list_block.find(".urls_list").append("<div class='url_block style-#{style}'>#{span}#{tag_a}</div>")
               a = urls_list_block.find(".url_block.style-#{style} a")
             a.attr('href', style_opts.url).text(style_opts.id)
+            a.closest(".url_block.hidden").removeClass("hidden")
       
         dialog.modal('hide')
 

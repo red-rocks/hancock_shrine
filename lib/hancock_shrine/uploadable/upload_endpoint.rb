@@ -44,6 +44,7 @@ module HancockShrine::Uploadable::UploadEndpoint
       elsif params["files"].is_a?(Array)
         params["files"].first
       end
+      # value = get_io(request)
 
       if value and (context[:record] || context[:model])&.try("#{params[:field_name]}_is_image?")
         context[:metadata].merge!({"crop" => {}})
@@ -55,7 +56,11 @@ module HancockShrine::Uploadable::UploadEndpoint
             })
           end
         end
-      end      
+      #   if context[:record]
+      #     context[:record].send("#{params[:field_name]}=", value)
+      #     context[:record].send("#{params[:field_name]}_derivatives!", *crop_param_names.map { |s| params[param].to_i})
+      #   end
+      end
       context
     end
     def upload_context_url(object, request)

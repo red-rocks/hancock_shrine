@@ -136,6 +136,26 @@ module RailsAdmin
             value.image?
           end
 
+          register_instance_option :pretty_value do
+            puts "pretty_value"
+            puts name
+            puts value.presence
+            puts image
+            puts value
+            puts 
+            if value.presence
+              v = bindings[:view]
+              url = resource_url
+              if image
+                thumb_url = resource_url(thumb_method)
+                image_html = v.image_tag(thumb_url, class: 'img-thumbnail')
+                url != thumb_url ? v.link_to(image_html, url, target: '_blank', rel: 'noopener noreferrer') : image_html
+              else
+                v.link_to((value.original_filename || value), url, target: '_blank', rel: 'noopener noreferrer')
+              end
+            end
+          end
+
 
 
           def resource_url(thumb = false)
