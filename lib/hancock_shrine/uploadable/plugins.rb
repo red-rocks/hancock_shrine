@@ -49,7 +49,7 @@ module HancockShrine::Uploadable::Plugins
           plugin plugin_name
         end
 
-        if plugin_name == :validation_helpers
+        if plugin_name == :validation_helpers or plugin_name == :hancock_validations
           if defined?(base) and base and defined?(base::Attacher) and base::Attacher
             base::Attacher.validate do
               if @is_image
@@ -142,7 +142,6 @@ module HancockShrine::Uploadable::Plugins
           class_eval <<-RUBY
             # Attacher.derivatives :hancock_processor do |original|
             Attacher.derivatives_processor do |original, crop: nil|
-              puts 'Attacher.derivatives_processor do |original, crop: nil|'
               # self    #=> #<Shrine::Attacher>
             
               # # record  #=> #<Photo>
