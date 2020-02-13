@@ -23,7 +23,7 @@ module HancockShrine
         remove_attachment
         moving
         store_dimensions
-        validation_helpers
+        hancock_validations
         processing
         backgrounding
         cropable
@@ -32,6 +32,8 @@ module HancockShrine
         versions
         compatibility
       )
+      # @plugins.delete 'validation_helpers' # TEMP
+
       @plugins.delete 'backgrounding' # TEMP
       # @plugins.delete 'hancock_versions' # TEMP
       # @plugins.delete 'hancockable' # TEMP
