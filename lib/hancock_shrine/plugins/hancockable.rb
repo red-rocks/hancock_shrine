@@ -7,7 +7,7 @@ class Shrine
     #
     module Hancockable
       def self.configure(uploader, opts = {})
-        uploader.plugin :type_predicates
+        uploader.plugin :type_predicates, methods: %i[jpg svg mov ppt]
       end
 
       module ClassMethods
