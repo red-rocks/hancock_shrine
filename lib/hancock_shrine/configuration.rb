@@ -55,9 +55,6 @@ module HancockShrine
           }
         },
         
-        store_dimensions: {
-          if: :is_image
-        },
         remote_url: {
           max_size: 100*1024*1024,
           max_image_size: 20*1024*1024,

@@ -1,4 +1,11 @@
 class HancockShrine::Uploader < Shrine
+  
+  def self.is_image
+    false
+  end
+  def self.init_plugins?
+    false
+  end
 
   include HancockShrine::Uploadable
 

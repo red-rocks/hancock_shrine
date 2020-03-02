@@ -1,5 +1,11 @@
 # class HancockUploader < Shrine
 class HancockUploader < HancockShrine::Uploader
+  def self.is_image
+    false
+  end
+  def self.init_plugins?
+    true
+  end
   # extend ActiveSupport::Concern
   
   include HancockShrine::BaseUploader

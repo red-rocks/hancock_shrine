@@ -14,6 +14,15 @@ class Shrine
       def self.load_dependencies(uploader, *)
       end
 
+      
+
+      # module InstanceMethods
+      #   def url(*opts)
+      #     data_url
+      #   end
+      # end
+
+
       module FileMethods
         
         def path
