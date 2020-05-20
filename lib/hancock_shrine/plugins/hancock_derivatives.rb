@@ -125,11 +125,13 @@ class Shrine
         attr_reader :derivatives_processed
 
         def create_derivatives(*args, storage: nil, **options)
-          @derivatives_processed = false
-          if ret = super
-            @derivatives_processed = true
+          unless @remove
+            @derivatives_processed = false
+            if ret = super
+              @derivatives_processed = true
+            end
+            return ret
           end
-          return ret
         end
 
         def remove=(value)
@@ -187,12 +189,34 @@ class Shrine
 
         def get_styles(record, name, context, action = :upload)
           styles_method = "#{name}_styles"
-    
           if record.method(styles_method).arity == 1
             record.send(styles_method, action)
           else
             record.send(styles_method)
           end
+        end
+
+        def resize_with_geometry(pipeline, geometry)
+          if actual_match = geometry.match(/\b(\d*)x?(\d*)\b(?:,(\d?))?(\@\>|\>\@|[\>\<\#\@\%^!])?/i)
+            width = actual_match[1].to_i
+            height = actual_match[2].to_i
+            orientation = actual_match[3]
+            modifier = actual_match[4]
+  
+            # https://github.com/thoughtbot/paperclip/blob/6661480c5b321709ad44c7ef9572d7f908857a9d/lib/paperclip/geometry.rb
+            ### TODO; may be not 'resize_to_limit'
+            pipeline = case modifier
+            when '!', '#'
+              pipeline.resize_to_fill(width, height, resize_opts_default)
+            when '>'
+              pipeline.resize_to_limit(width, height, resize_opts_default)
+            when '<'
+              pipeline.resize_to_limit(width, height, resize_opts_default)
+            else
+              pipeline.resize_to_limit(width, height, resize_opts_default)
+            end
+          end
+          pipeline
         end
         
         public
@@ -213,25 +237,26 @@ class Shrine
     
           # https://github.com/thoughtbot/paperclip/blob/6661480c5b321709ad44c7ef9572d7f908857a9d/lib/paperclip/geometry_parser_factory.rb
           if geometry = style_opts[:geometry]
-            if actual_match = geometry.match(/\b(\d*)x?(\d*)\b(?:,(\d?))?(\@\>|\>\@|[\>\<\#\@\%^!])?/i)
-              width = actual_match[1].to_i
-              height = actual_match[2].to_i
-              orientation = actual_match[3]
-              modifier = actual_match[4]
+            pipeline = resize_with_geometry(pipeline, geometry)
+            # if actual_match = geometry.match(/\b(\d*)x?(\d*)\b(?:,(\d?))?(\@\>|\>\@|[\>\<\#\@\%^!])?/i)
+            #   width = actual_match[1].to_i
+            #   height = actual_match[2].to_i
+            #   orientation = actual_match[3]
+            #   modifier = actual_match[4]
     
-              # https://github.com/thoughtbot/paperclip/blob/6661480c5b321709ad44c7ef9572d7f908857a9d/lib/paperclip/geometry.rb
-              ### TODO; may be not 'resize_to_limit'
-              pipeline = case modifier
-              when '!', '#'
-                pipeline.resize_to_fill(width, height, resize_opts_default)
-              when '>'
-                pipeline.resize_to_limit(width, height, resize_opts_default)
-              when '<'
-                pipeline.resize_to_limit(width, height, resize_opts_default)
-              else
-                pipeline.resize_to_limit(width, height, resize_opts_default)
-              end
-            end
+            #   # https://github.com/thoughtbot/paperclip/blob/6661480c5b321709ad44c7ef9572d7f908857a9d/lib/paperclip/geometry.rb
+            #   ### TODO; may be not 'resize_to_limit'
+            #   pipeline = case modifier
+            #   when '!', '#'
+            #     pipeline.resize_to_fill(width, height, resize_opts_default)
+            #   when '>'
+            #     pipeline.resize_to_limit(width, height, resize_opts_default)
+            #   when '<'
+            #     pipeline.resize_to_limit(width, height, resize_opts_default)
+            #   else
+            #     pipeline.resize_to_limit(width, height, resize_opts_default)
+            #   end
+            # end
           end
     
           if format = style_opts[:format]
@@ -270,6 +295,18 @@ class Shrine
               ]
               pipeline = pipeline.crop(*crop_array)
               context[:metadata][:crop] = crop if context[:metadata]
+            
+            elsif (smartcrop = record.try("#{name}_smartcrop"))
+              scr = ::Vips::Image.new_from_file original.path
+              w_ratio = (scr.width.to_f / smartcrop[:width].to_f)
+              h_ratio = (scr.height.to_f / smartcrop[:height].to_f)
+              ratio = (w_ratio < h_ratio ? w_ratio : h_ratio)
+              if ratio < 1
+                smartcrop[:width] *= ratio
+                smartcrop[:height] *= ratio
+              end
+              pipeline = pipeline.smartcrop(smartcrop[:width], smartcrop[:height], smartcrop[:opts])
+
             end
           end
             
@@ -284,7 +321,8 @@ class Shrine
             }
             derivatives[style_name] = process_style(opts)
           end
-          # puts derivatives.inspect
+          puts styles.inspect
+          puts derivatives.inspect
           derivatives.compact
 
         end
