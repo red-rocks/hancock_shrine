@@ -125,7 +125,7 @@ class Shrine
         attr_reader :derivatives_processed
 
         def create_derivatives(*args, storage: nil, **options)
-          unless @remove
+          unless remove?
             @derivatives_processed = false
             if ret = super
               @derivatives_processed = true
@@ -146,7 +146,7 @@ class Shrine
 
         private
         def remove?
-          remove && remove != "" && remove !~ /\A(0|false)\z/
+          remove && remove != "" && remove != 0 && remove !~ /\A(0|false)\z/
         end
 
         
