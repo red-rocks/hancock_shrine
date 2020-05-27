@@ -4,6 +4,7 @@ module HancockShrine::Uploadable::Deriviations::Crop
   included do
   
     include HancockShrine::Uploadable::Deriviations
+    include Shrine::Plugins::Cropable
     derivation :crop do |file, crop_x, crop_y, crop_w, crop_h, opts|
       source.uploader.derivation_crop_handler(file, crop_x, crop_y, crop_w, crop_h)
     end

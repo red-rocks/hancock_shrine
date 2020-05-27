@@ -19,11 +19,16 @@ class Shrine
 
 
       module AttacherMethods
-        def initialize(file: nil, cache: :cache, store: :store, hancock_model: :hancock_model, is_image: :is_image)
+        attr_reader :uploader_class
+        attr_reader :hancock_model
+        attr_reader :is_image
+        
+        def initialize(file: nil, cache: :cache, store: :store, hancock_model: :hancock_model, is_image: :is_image, uploader_class: :uploader_class)
           # puts 'def initialize(file: nil, cache: :cache, store: :store, hancock_model: hancock_model, is_image: is_image)'
           # puts hancock_model.inspect
           # puts is_image.inspect
 
+          @uploader_class = uploader_class
           @hancock_model = hancock_model
           @is_image = is_image
           ### TODO get is_image from uploader

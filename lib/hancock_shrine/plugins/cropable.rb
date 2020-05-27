@@ -9,13 +9,13 @@ class Shrine
 
       def self.configure(uploader, opts = {})
         # uploader.opts[:Timestampable] = "LOADED"
-      end
-
-      def self.load_dependencies(uploader, *)
-        uploader.plugin :add_metadata
         uploader.add_metadata :crop do |io, context|
+          # puts 'uploader.add_metadata :crop do |io, context| configure'
+          # puts io.inspect
+          # puts context.inspect
           
           _crop = ((context and context[:metadata] and (context[:metadata][:crop] || context[:metadata]['crop'])) ||  {})
+          # puts _crop.inspect
           if _crop.blank? and context and context[:record]
             _crop = {
               crop_w: context[:record].try(:crop_w),
@@ -24,8 +24,37 @@ class Shrine
               crop_y: context[:record].try(:crop_y)
             }
           end
+          # puts _crop.inspect
           _crop
         end
+      end
+
+      def self.load_dependencies(uploader, *)
+        uploader.plugin :add_metadata do |a,b,c|
+          # puts 'uploader.plugin :add_metadata do'
+          # puts a.inspect
+          # puts b.inspect
+          # puts c.inspect
+        end
+        puts uploader.attacher.inspect
+        # uploader.add_metadata :crop do |io, context|
+        #   puts 'uploader.add_metadata :crop do |io, context| load_dependencies'
+        #   puts io.inspect
+        #   puts context.inspect
+          
+        #   _crop = ((context and context[:metadata] and (context[:metadata][:crop] || context[:metadata]['crop'])) ||  {})
+        #   puts _crop.inspect
+        #   if _crop.blank? and context and context[:record]
+        #     _crop = {
+        #       crop_w: context[:record].try(:crop_w),
+        #       crop_h: context[:record].try(:crop_h),
+        #       crop_x: context[:record].try(:crop_x),
+        #       crop_y: context[:record].try(:crop_y)
+        #     }
+        #   end
+        #   puts _crop.inspect
+        #   _crop
+        # end
       end
 
 

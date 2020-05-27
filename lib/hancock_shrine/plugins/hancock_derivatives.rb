@@ -278,6 +278,13 @@ class Shrine
 
 
         def hancock_derivatives(original, record, name, context, opts = {})
+          # puts 'hancock_derivatives'
+          # puts original
+          # puts record
+          # puts name
+          # puts context
+          # puts opts
+          
           derivatives = {}
           if record.try("#{name}_is_image?")
             pipeline = get_pipeline(original)
@@ -321,8 +328,8 @@ class Shrine
             }
             derivatives[style_name] = process_style(opts)
           end
-          puts styles.inspect
-          puts derivatives.inspect
+          # puts styles.inspect
+          # puts derivatives.inspect
           derivatives.compact
 
         end
